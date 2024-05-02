@@ -1,10 +1,9 @@
 # Data
 
-## What do I know aout the data?
+## What do I know about the data?
 ### Column headings:
 
 'Period': str
-- This is the time period of the data.
 - Possible values:
 ['2022-23']
 
@@ -22,7 +21,6 @@
  'SmokingStatusGroupBooking' 'TotalBabies' 'TotalDeliveries']
 
 'Org_Level': str
-- Granularity of data. Is either National, NHS England (Region) or Provider
 - Possible Values:
 ['National' 'NHS England (Region)' 'Provider']
 
@@ -72,9 +70,8 @@
  'Non-Smoker / Ex-Smoker' 'Smoker' nan]
 
 'Count_Of': str
-- Either "Babies" or "Deliveries"- seems to be what the measure is referring to?
 - Possible Values:
 ['Deliveries' 'Babies']
 
-'Value':num
+'Value': num
 - The value for the given row, rounded to the nearest 5
