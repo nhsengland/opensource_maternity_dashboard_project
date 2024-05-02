@@ -96,3 +96,14 @@ create_chart_total_across_level(df, "Provider", "TotalDeliveries")
 
 #from 2021 census: SW has 5.7 million (2021 census) and London 8.8 million. 
 #But from chart looks like london is having more than 2x the number of babies than SW. 
+
+# What next? 
+# Would be interested in finding the rate for each of the metrics.
+# think about a map next: graph object (go - finer control)
+#Choroplethmapbox
+#geopandas 
+#download geojson
+#https://geoportal.statistics.gov.uk/datasets/98493db82f5b4c3ba11538fc3a52199f_0/explore?location=52.030043%2C-3.448260%2C6.00
+#https://geoportal.statistics.gov.uk/search?q=nhs%20region%202022
+#https://www.ons.gov.uk/methodology/geography/geographicalproducts/digitalboundaries
+#https://www.ons.gov.uk/methodology/geography/geographicalproducts/digitalboundaries
