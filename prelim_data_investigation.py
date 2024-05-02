@@ -4,13 +4,6 @@ import matplotlib.pyplot as plt
 #import data
 df = pd.read_csv("hosp-epis-stat-mat-msdscsv-2022-23.csv")
 
-# The "Dimension" Column is what will be the chart title, 
-import matplotlib.pyplot as plt
-
-import matplotlib.pyplot as plt
-
-import matplotlib.pyplot as plt
-
 def create_bar_chart(dimension):
     """
     Create a bar chart for each dimension to figure out what the data looks like.
@@ -44,6 +37,8 @@ def create_bar_chart(dimension):
     # Save the chart
     plt.savefig(f"prelim_charts/{dimension}", bbox_inches='tight')
     plt.close()
+
+
 # Replace missing values in "Measure" with values from "Dimension" - This is just for Total where there is no measure for Total
 df['Measure'] = df['Measure'].fillna(df['Dimension'].map(str))
 
