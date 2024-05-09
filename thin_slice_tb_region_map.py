@@ -58,9 +58,9 @@ def return_data_for_map():
 
     # merge together geo data with rate data
     england = gpd.read_file("NHS_England_Regions_April_2021_EN_BUC_2022.geojson")
-    merged = england.merge(joined_df, left_on="NHSER21NM", right_on="region_name")
+    joined_df = england.merge(joined_df, left_on="NHSER21NM", right_on="region_name")
 
-    return merged
+    return joined_df
 
 def create_plt_map(data):
     """
@@ -77,4 +77,4 @@ def create_plt_map(data):
 
 # Run functions to create data and map
 data = return_data_for_map()
-create_plt_map(data)
+#create_plt_map(data)
