@@ -2,3 +2,4 @@ Scripts/
 Lib/
 __pycache__/
 pyvenv.cfg
+output/
