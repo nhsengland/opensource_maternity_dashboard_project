@@ -2,3 +2,5 @@ Scripts/
 Lib/
 __pycache__/
 pyvenv.cfg
+output/
+.DS_Store
