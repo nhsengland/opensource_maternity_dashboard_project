@@ -43,12 +43,12 @@ def return_data_for_map():
     """
 
     #read in csv and do pre-processing
-    df = pd.read_csv("hosp-epis-stat-mat-msdscsv-2022-23.csv")
+    df = pd.read_csv("data/hosp-epis-stat-mat-msdscsv-2022-23.csv")
     df = filter_for_total_babies(df, "NHS England (Region)")
     df = map_org_name(df)
 
     # read in population excel and aggregate for regions
-    df_pop = pd.read_excel("ons_2022-23_pop_health_geos.xlsx", sheet_name="Mid-2022 ICB 2023", header=3)
+    df_pop = pd.read_excel("data/ons_2022-23_pop_health_geos.xlsx", sheet_name="Mid-2022 ICB 2023", header=3)
     df_pop_agg = df_pop.groupby(['NSHER 2023 Name', 'NHSER 2023 Code'])['Total'].sum().reset_index()
 
     #use ONS pop estimates as denominator for rate
@@ -57,7 +57,7 @@ def return_data_for_map():
 
 
     # merge together geo data with rate data
-    england = gpd.read_file("NHS_England_Regions_April_2021_EN_BUC_2022.geojson")
+    england = gpd.read_file("data/NHS_England_Regions_April_2021_EN_BUC_2022.geojson")
     joined_df = england.merge(joined_df, left_on="NHSER21NM", right_on="region_name")
 
     return joined_df

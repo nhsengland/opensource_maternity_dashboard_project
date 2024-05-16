@@ -1,4 +1,4 @@
-import thin_slice_tb_region_map
+import thin_slice_tb_region_map as thin_slice_tb_region_map
 import plotly.express as px
 
 # Load DataFrame
@@ -24,6 +24,7 @@ fig = px.choropleth_mapbox(df,
                             mapbox_style="carto-positron",
                             center={"lat": 50, "lon": 0},
                             zoom=5)
-
+# Add title to the figure
+fig.update_layout(title_text="Births per 1000 by Region")
 # I think we should output to a specific folder, then we can ignore it with git.
 fig.write_html("output/map.html")
