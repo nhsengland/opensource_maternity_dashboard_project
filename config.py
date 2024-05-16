@@ -77,13 +77,26 @@ measure_dict = {
 """
 Dimensions still to be considered:
 AgeAtBookingMotherGroup
+- All have 30-34 as most popular group. Could find proportion of that as a whole? 
+- or which has the largest portion of oldest/youngest category? 
+- an option for each age group?
+- could find rate for all submitters for 30-34 and then note which has the most deviation from that?
 BirthweightTermGroup
+- Similar issue to age group. 
 DeliveryMethodBabyGroup
+- Spontaneous birth rate vs all others?
 DeprivationDecileAtBooking
+- there are 10: most common? Find a mean and round it?
 EthnicCategoryMotherGroup
+- All one colour, hover to see chart.
+- Unless could find population estimates for ethnicity and therefore get rate of mothers
 GestationLengthBirth
+- 39 weeks is most common for all. get rate of this against all others?
 OnsetOfLabour
+- spontaneous vs others?
 PlaceTypeActualDeliveryMidwifery
+- maternity ward vs all others?
 PreviousCaesareanSectionsGroup
+- rate of mothers that had had at least one caesarean?
 """
 
