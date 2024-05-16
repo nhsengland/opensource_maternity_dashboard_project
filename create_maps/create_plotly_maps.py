@@ -9,8 +9,8 @@ import config
 
 # Set variables:
 # can this be done in a config file? in a dictionary?
+# could be made into a command line flag although this wouldn't be necessary for dashboard
 org_level =  "NHS England (Region)"
-rate_col = "Percent"
 
 #dimension = "SmokingStatusGroupBooking"
 #dimension = "SkinToSkinContact1HourTerm"
@@ -43,6 +43,7 @@ fig = px.choropleth_mapbox(df,
                             mapbox_style="carto-positron",
                             center={"lat": 53, "lon": 0},
                             zoom=5)
+
 # Add title to the figure
 fig.update_layout(title_text=config.measure_dict[dimension]["map_title"])
 fig.write_html("output/map.html")

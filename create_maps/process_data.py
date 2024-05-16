@@ -54,6 +54,7 @@ def filter_for_measure_and_level(df, dimension, org_level):
 
     return df_filtered
 
+
 def get_rates(df, dimension, measure_dict):
     """
     Calculates rates for a given dimension based on specified numerator and denominator
@@ -136,4 +137,3 @@ def return_data_for_map(dimension, org_level, measure_dict):
         df["Percent"] = df["Rate"] * 100
     
     return df
-
