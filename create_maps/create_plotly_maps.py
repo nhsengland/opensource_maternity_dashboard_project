@@ -4,6 +4,7 @@ import plotly.express as px
 # Set variables:
 # can this be done in a config file? in a dictionary?
 org_level =  "NHS England (Region)"
+rate_col = "Rate %"
 
 dimension = "SmokingStatusGroupBooking"
 numerator = "Smoker"
@@ -33,6 +34,21 @@ dimension = "ApgarScore5TermGroup7"
 numerator = "7 to 10"
 map_title = "Percentage of Babies with an APGAR Score or 7-10" #APGAR is quick test for healthy infant
 
+dimension = "FolicAcidSupplement"
+numerator = "numerator"
+map_title = "Percentage of Mothers taking Folic Acid"
+
+
+"""
+rate_col = "Rate"
+dimension = "TotalBabies"
+numerator = ""
+map_title = "Rate of births per 1000 people"
+
+dimension = "TotalDeliveries"
+numerator = ""
+map_title = "Rate of deliveries per 1000 people"
+"""
 
 # Get map data
 df = process_data.return_data_for_map(dimension, org_level, numerator)
@@ -52,7 +68,7 @@ nhs_colors = ['#B4D0FF', '#699EFF', '#1E6EFF', '#003087', '#001843']
 fig = px.choropleth_mapbox(df, 
                             geojson=geo, 
                             locations="region_name", 
-                            color='Rate %',
+                            color= rate_col,
                             color_continuous_scale=nhs_colors,
                             mapbox_style="carto-positron",
                             center={"lat": 50, "lon": 0},

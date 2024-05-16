@@ -1,12 +1,5 @@
-#https://geoportal.statistics.gov.uk/datasets/98493db82f5b4c3ba11538fc3a52199f_0/explore?location=52.030043%2C-3.448260%2C6.00
-#https://geoportal.statistics.gov.uk/search?q=nhs%20region%202022
-#https://www.ons.gov.uk/methodology/geography/geographicalproducts/digitalboundaries
-#https://www.ons.gov.uk/methodology/geography/geographicalproducts/digitalboundaries
-
 import geopandas as gpd
-import matplotlib.pyplot as plt
 import pandas as pd
-import matplotlib.colors as mcolors
 
 
 def map_org_name(df):
@@ -58,9 +51,9 @@ def get_rate_for_dimension(df, numerator):
 
     # Get a df of justs smokers for each region and join on Org_Name
     # Filter rows where measure is "Smoker"
-    smoker_df = df[df['Measure'] == numerator]
+    smoker_df = df[df['Measure'] == numerator] #make list
 
-    #jin df together on Org_Name
+    #join df together on Org_Name
     merged_df = smoker_df.merge(result, on="Org_Name")
 
     merged_df["Rate %"] = merged_df["Value"] / merged_df["Total_Sum"] * 100
@@ -82,20 +75,20 @@ def join_geojson_data(df):
 def join_pop_data(df):
     """
     Import the population data, aggregate it to region, and join onto df
+    This is just currently for totalbabies/deliveries
     """
     # read in population excel and aggregate for regions
     df_pop = pd.read_excel("data/ons_2022-23_pop_health_geos.xlsx", sheet_name="Mid-2022 ICB 2023", header=3)
     df_pop_agg = df_pop.groupby(['NSHER 2023 Name', 'NHSER 2023 Code'])['Total'].sum().reset_index()
 
-    
     joined_df = df.merge(df_pop_agg, left_on="region_name", right_on="NSHER 2023 Name", how="left")
 
-    
     #use ONS pop estimates as denominator for rate
-    #this code is specifically for this birth rate. 
-    #joined_df['births per 1000'] = joined_df['Value'] / joined_df['Total'] * 1000
+    joined_df["Rate"] = joined_df['Value'] / joined_df['Total'] * 1000
 
     return joined_df
+
+
 
 def return_data_for_map(dimension, org_level, numerator):
     """
@@ -105,7 +98,78 @@ def return_data_for_map(dimension, org_level, numerator):
     df = pd.read_csv("data/hosp-epis-stat-mat-msdscsv-2022-23.csv")
     df = map_org_name(df)
     df = filter_for_measure_and_level(df, dimension, org_level)
-    df = get_rate_for_dimension(df, numerator) 
+
+    if dimension == "FolicAcidSupplement":
+        """
+        total_df = df.groupby('Org_Name')['Value'].sum().reset_index()
+        total_df = total_df.rename(columns={'Value': 'total'})
+        result = df.merge(total_df, on='Org_Name', how='left')
+
+
+        desired_measures = ["Has been taking prior to becoming pregnant", "Started taking once pregnancy confirmed"]
+        filtered_df = df[df['Measure'].isin(desired_measures)]
+        numerator_df = filtered_df.groupby('Org_Name')['Value'].sum().reset_index()
+        numerator_df = numerator_df.rename(columns={'Value': 'numerator'})
+
+
+        merged_df = numerator_df.merge(result, on="Org_Name", how='left')
+        merged_df["Rate %"] = merged_df["numerator"] / merged_df["total"] * 100
+        df = merged_df
+        """
+        # List of measures you want to group by
+        measures_to_group = ["Has been taking prior to becoming pregnant", "Started taking once pregnancy confirmed"]
+
+        # Group by the desired measures and org_name, and sum the value
+        grouped = df.loc[df['Measure'].isin(measures_to_group), ['Value', 'Measure', 'Org_Name']].groupby(['Measure', 'Org_Name'])['Value'].sum().reset_index()
+        grouped = df.groupby('Org_Name')['Value'].sum().reset_index()
+
+        # Replace the 'Measure' column with the string "numerator"
+        grouped['Measure'] = "numerator"
+        grouped = map_org_name(grouped)
+        df = pd.concat([df, grouped], ignore_index=True)
+        print(df)
+
+
+
+        
+        
+
+    if dimension == "TotalBabies" or dimension == "TotalDeliveries":
+        df = join_pop_data(df)
+    else:
+        df = get_rate_for_dimension(df, numerator) 
+    
     map_df = join_geojson_data(df)
 
     return map_df
+
+
+"""
+['AgeAtBookingMotherGroup'
+'BirthweightTermGroup'
+'DeliveryMethodBabyGroup'
+'DeprivationDecileAtBooking'
+'EthnicCategoryMotherGroup'
+'FolicAcidSupplement' - ["Has been taking prior to becoming pregnant", "Started taking once pregnancy confirmed"]
+'GestAgeFormalAntenatalBookingGroup'
+'GestationLengthBirth'
+'OnsetOfLabour'
+'PlaceTypeActualDeliveryMidwifery'
+'PreviousCaesareanSectionsGroup'
+'PreviousLiveBirthsGroup'
+
+
+'ApgarScore5TermGroup7' - done
+'BabyFirstFeedBreastMilkStatus' - done
+'BirthweightTermGroup2500' -done
+'ComplexSocialFactorsInd' -done
+'GestationLengthBirthGroup37' -done
+'SkinToSkinContact1HourTerm' -done
+'SmokingStatusGroupBooking'-done
+'TotalBabies'-done
+'TotalDeliveries'-done
+
+
+
+]
+"""
