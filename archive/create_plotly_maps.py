@@ -6,16 +6,8 @@ import geopandas as gpd
 sys.path.append('./')
 import config
 
-dimension_list = ["SmokingStatusGroupBooking", "SkinToSkinContact1HourTerm",
-                  "GestationLengthBirthGroup37", "ComplexSocialFactorsInd",
-                  "BirthweightTermGroup2500", "BabyFirstFeedBreastMilkStatus",
-                  "ApgarScore5TermGroup7", "FolicAcidSupplement", "GestAgeFormalAntenatalBookingGroup",
-                  "PreviousLiveBirthsGroup", "TotalBabies", "TotalDeliveries"]
-# Set variables:
-# can this be done in a config file? in a dictionary?
-# could be made into a command line flag although this wouldn't be necessary for dashboard
 org_level =  "NHS England (Region)"
-for dimension in dimension_list:
+for dimension in config.measure_dict:
 
     # Get map data in the correct format
     df = process_data.return_data_for_map(dimension, org_level, config.measure_dict)
@@ -37,4 +29,5 @@ for dimension in dimension_list:
 
     # Add title to the figure
     fig.update_layout(title_text=config.measure_dict[dimension]["map_title"])
+    #output click events so that when clicked it updates other parts of map
     fig.write_html(f"output/{dimension}_map.html")

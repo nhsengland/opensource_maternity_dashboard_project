@@ -1,5 +1,5 @@
 measure_dict = {
-        "AgeAtBookingMotherGroup": {
+    "AgeAtBookingMotherGroup": {
         "numerator": ["35 to 39", "40 to 44", "45 or Over"],
         "denominator": ["Under 20", "20 to 24", "25 to 29", "30 to 34", "35 to 39", "40 to 44", "45 or Over"],
         "map_title": "Percentage of Mothers OVER the age of 35",
@@ -91,7 +91,7 @@ measure_dict = {
     },
     "PreviousCaesareanSectionsGroup": {
         "numerator": ["At least one Caesarean"],
-        "denominator": ["At least one Caesarean", '"At least one Previous Birth, zero Caesareans"', "Zero Previous Births"],
+        "denominator": ["At least one Caesarean", "At least one Previous Birth, zero Caesareans", "Zero Previous Births"],
         "map_title": "Percentage of mothers, giving birth, who have already had at least one caesarean",
         "rate_col": "Percent"
     },

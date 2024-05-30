@@ -136,3 +136,11 @@ def return_data_for_map(dimension, org_level, measure_dict):
         df["Percent"] = df["Rate"] * 100
     
     return df
+
+def return_data_for_bar_chart(dimension, org_level, location):
+        # Read the initial dataset from the CSV file, map names and filter
+    df = pd.read_csv("data/hosp-epis-stat-mat-msdscsv-2022-23.csv")
+    df = map_org_name(df)
+    df = filter_for_measure_and_level(df, dimension, org_level)
+    df = df[df["region_name"] == location]
+    return df
