@@ -17,20 +17,6 @@ dimension_list = ["SmokingStatusGroupBooking", "SkinToSkinContact1HourTerm",
 org_level =  "NHS England (Region)"
 for dimension in dimension_list:
 
-#dimension = "SmokingStatusGroupBooking"
-#dimension = "SkinToSkinContact1HourTerm"
-#dimension = "GestationLengthBirthGroup37"
-#dimension = "ComplexSocialFactorsInd"
-#dimension = "BirthweightTermGroup2500"
-#dimension = "BabyFirstFeedBreastMilkStatus"
-#dimension = "ApgarScore5TermGroup7"
-#dimension = "FolicAcidSupplement"
-#dimension = "GestAgeFormalAntenatalBookingGroup"
-#dimension = "PreviousLiveBirthsGroup"
-#dimension = "TotalBabies"
-#dimension = "TotalDeliveries"
-
-
     # Get map data in the correct format
     df = process_data.return_data_for_map(dimension, org_level, config.measure_dict)
     geo_df = geojson = gpd.read_file("data/NHS_England_Regions_April_2021_EN_BUC_2022.geojson")
@@ -40,7 +26,6 @@ for dimension in dimension_list:
     # Define NHS colours for map
     nhs_colors = ['#B4D0FF', '#699EFF', '#1E6EFF', '#003087', '#001843']
     
-
     fig = px.choropleth_mapbox(df, 
                                 geojson=geo_df, 
                                 locations="region_name", 

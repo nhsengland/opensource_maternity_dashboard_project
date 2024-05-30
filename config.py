@@ -125,7 +125,5 @@ EthnicCategoryMotherGroup
 GestationLengthBirth
 - 39 weeks is most common for all. get rate of this against all others?
 - plus minus 37 is already a category. this is premature cutoff
-PreviousCaesareanSectionsGroup
-- rate of mothers that had had at least one caesarean?
 """
 
