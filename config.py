@@ -41,6 +41,12 @@ measure_dict = {
         "map_title": "Percentage of Mothers living in the Most Deprived areas",
         "rate_col": "Percent"
     },
+    "EthnicCategoryMotherGroup": {
+        "numerator": ["Any other ethnic group", "Asian or Asian British", "Black or Black British", "Mixed", "Not known", "Not Stated", "Not Stated"],
+        "denominator": ["Any other ethnic group", "Asian or Asian British", "Black or Black British", "Mixed", "Not known", "Not Stated", "Not Stated"],
+        "map_title": "Ethnic Category of Mother",
+        "rate_col": "Percent"
+    },
     "FolicAcidSupplement": {
         "numerator": ["Has been taking prior to becoming pregnant","Started taking once pregnancy confirmed"],
         "denominator": ["Has been taking prior to becoming pregnant","Started taking once pregnancy confirmed", 
