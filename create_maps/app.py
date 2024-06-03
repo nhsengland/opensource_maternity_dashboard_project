@@ -10,8 +10,8 @@ import config
 
 app = Dash(__name__)
 org_level =  "NHS England (Region)"
-#just a single map here
 dimension = "AgeAtBookingMotherGroup"
+
 def get_map(org_level, dimension):
     # Get map data in the correct format
     df = process_data.return_data_for_map(dimension, org_level, config.measure_dict)
@@ -48,29 +48,8 @@ app.layout = html.Div([
     dcc.Graph(
         id='bar-chart',
         figure=get_bar_chart(org_level, dimension, location="London")
-    ),
-    html.Div(className='row', children=[
-        html.Div([
-            dcc.Markdown("""
-                **Hover Data**
-            """),
-            html.Pre(id='hover-data')
-        ]),
-        html.Div([
-            dcc.Markdown("""
-                **Click Data**
-            """),
-            html.Pre(id='click-data'),
-        ]),
+    )
     ])
-])
-
-
-@callback(
-    Output('hover-data', 'children'),
-    Input('map', 'hoverData'))
-def display_hover_data(hoverData):
-    return json.dumps(hoverData, indent=2)
 
 
 @callback(
@@ -79,10 +58,11 @@ def display_hover_data(hoverData):
     Input('map', 'clickData'))
 def display_bar_chart(dimension, clickData):
     if clickData is None:
-        location = "Midlands"
+        location = "All Submitters"
+        org_level = "National"
     else:
         location = clickData["points"][0]["location"]
-
+        org_level = "NHS England (Region)"
     fig = get_bar_chart(org_level, dimension, location)
     return fig
 

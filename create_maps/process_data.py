@@ -21,7 +21,8 @@ def map_org_name(df):
         'MIDLANDS COMMISSIONING REGION': 'Midlands',
         'EAST OF ENGLAND COMMISSIONING REGION': 'East of England',
         'NORTH WEST COMMISSIONING REGION': 'North West',
-        'NORTH EAST AND YORKSHIRE COMMISSIONING REGION': 'North East and Yorkshire'
+        'NORTH EAST AND YORKSHIRE COMMISSIONING REGION': 'North East and Yorkshire',
+        'ALL SUBMITTERS': 'All Submitters'
     }
 
     # Create the 'region_name' column by replacing the 'Org_Name' values based on the mapping dictionary
