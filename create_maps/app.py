@@ -4,11 +4,12 @@ import process_data
 import plotly.express as px
 import sys
 import geopandas as gpd
+import dash_bootstrap_components as dbc
 sys.path.append('./')
 import config
 
 
-app = Dash(__name__)
+app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 org_level =  "NHS England (Region)"
 dimension = "AgeAtBookingMotherGroup"
 
@@ -39,18 +40,58 @@ def get_bar_chart(org_level, dimension, location):
     fig = px.bar(df, x= "Measure", y="Value", title=location)
     return fig
 
-app.layout = html.Div([
-    dcc.Dropdown(list(config.measure_dict.keys()), dimension, id='dimension-dropdown'),
-    dcc.Graph(
-        id='map',
-        figure=get_map(org_level, dimension)
-    ),
-    dcc.Graph(
-        id='bar-chart',
-        figure=get_bar_chart(org_level, dimension, location="London")
-    )
-    ])
+# the style arguments for the sidebar. We use position:fixed and a fixed width
+SIDEBAR_STYLE = {
+    "position": "fixed",
+    "top": 0,
+    "left": 0,
+    "bottom": 0,
+    "width": "23rem",
+    "padding": "2rem 1rem",
+    "background-color": "#f8f9fa",
+}
 
+# the styles for the main content position it to the right of the sidebar and
+# add some padding.
+CONTENT_STYLE = {
+    "margin-left": "25rem",
+    "margin-right": "2rem",
+    "padding": "2rem 1rem",
+}
+
+sidebar = html.Div(
+    [
+        html.H2("Sidebar", className="display-4"),
+        html.Hr(),
+        html.P(
+            "A simple sidebar layout", className="lead"
+        ),
+        dcc.Dropdown(list(config.measure_dict.keys()), dimension, id='dimension-dropdown'),
+    ],
+    style=SIDEBAR_STYLE,
+)
+
+content = html.Div(
+    [
+        dcc.Graph(
+            id='map',
+            figure=get_map(org_level, dimension)
+        ),
+        dcc.Graph(
+            id='bar-chart',
+            figure=get_bar_chart(org_level, dimension, location="London")
+        )
+    ], 
+    style=CONTENT_STYLE
+)
+
+app.layout = html.Div([
+    dcc.Location(id="url"),
+    dbc.Row([
+        dbc.Col(sidebar, width=3),
+        dbc.Col(content, width=12)
+    ])
+])
 
 @callback(
     Output('bar-chart', 'figure'),
