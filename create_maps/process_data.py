@@ -139,9 +139,26 @@ def return_data_for_map(dimension, org_level, measure_dict):
     return df
 
 def return_data_for_bar_chart(dimension, org_level, location):
-        # Read the initial dataset from the CSV file, map names and filter
+    # Read the initial dataset from the CSV file, map names and filter
     df = pd.read_csv("data/hosp-epis-stat-mat-msdscsv-2022-23.csv")
     df = map_org_name(df)
     df = filter_for_measure_and_level(df, dimension, org_level)
     df = df[df["region_name"] == location]
     return df
+
+
+def merge_total_submitters(df_location, df_all_submitters):
+    #Merges the two dataframes together and creates the percentage for the comparison marker to All Submitters
+
+    # Calculate the total value for each measure in all submitters
+    total_all_submitters = df_all_submitters['Value'].sum()
+    df_all_submitters['Percentage'] = df_all_submitters['Value'] / total_all_submitters
+    
+    # Merge the percentage data with the location-specific data
+    df_merged = pd.merge(df_location, df_all_submitters[['Measure', 'Percentage']], on='Measure', suffixes=('', '_all_submitters'))
+    
+    # Calculate the marker values
+    df_merged['All Submitters Value'] = df_merged['Percentage'] * df_location['Value'].sum()
+
+    return df_merged
+    
