@@ -5,6 +5,7 @@ import sys
 import geopandas as gpd
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
+import json
 sys.path.append('./')
 import config
 
@@ -13,7 +14,7 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 org_level =  "NHS England (Region)"
 dimension = "AgeAtBookingMotherGroup"
 
-def get_map(org_level, dimension):
+def get_map(org_level, dimension, selectedpoints=None):
     # Get map data in the correct format
     df = process_data.return_data_for_map(dimension, org_level, config.measure_dict)
     geo_df = gpd.read_file("data/NHS_England_Regions_April_2021_EN_BUC_2022.geojson")
@@ -28,11 +29,13 @@ def get_map(org_level, dimension):
                                 color_continuous_scale=nhs_colors,
                                 mapbox_style="carto-positron",
                                 center={"lat": 53, "lon": -2},
-                                zoom=5)
+                                zoom=5.5)
 
 
     fig.update_layout(title_text=config.measure_dict[dimension]["map_title"])
     fig.update_layout(clickmode='event+select')
+    if selectedpoints is not None:
+        fig.update_traces(selectedpoints=selectedpoints)
     return fig
 
 def get_bar_chart(org_level, dimension, location):
@@ -95,24 +98,32 @@ sidebar = html.Div(
 )
 
 content = html.Div(
-    dbc.Row(
+    [dbc.Row(
         [
             dbc.Col(
                 dcc.Graph(
                     id='map',
                     figure=get_map(org_level, dimension),
                     style={"height": "800px"}
-                ), width=5, style={"padding": "0"}  # Removed padding from the column
+                ), width=5, style={"padding": "0"}
             ),
             dbc.Col(
                 dcc.Graph(
                     id='bar-chart',
                     figure=get_bar_chart(org_level, dimension, location="All Submitters"),
                     style={"height": "800px"}
-                ), width=7, style={"padding": "0"}  # Removed padding from the column
+                ), width=7, style={"padding": "0"} 
             )
         ]
     ),
+            html.Div([
+            html.Pre(id='click-data')
+        ]),   
+
+    html.Div([
+            html.Pre(id='selectedpoints')
+        ]),   
+    ],
     style=CONTENT_STYLE
 )
 
@@ -120,31 +131,53 @@ app.layout = html.Div([
     dcc.Location(id="url"),
     dbc.Row([
         dbc.Col(sidebar, width=1),
-        dbc.Col(content, width=11, style={"padding": "0"})  # Removed padding from the column
-    ])
+        dbc.Col(content, width=11, style={"padding": "0"})
+    ]),
 ])
+
+
+@callback(
+    Output('click-data', 'children'),
+    Input('map', 'selectedData'))
+def display_click_data(clickData):
+    return json.dumps(clickData, indent=2)
+
+
+# callback(
+#     Output('selectedpoints', 'children'),
+#     Input('map', 'selectedData'))
+# def display_click_data(clickData):
+#     return json.dumps(clickData, indent=2)
+
 
 @callback(
     Output('bar-chart', 'figure'),
     Input('dimension-dropdown', 'value'),
-    Input('map', 'clickData'))
-def display_bar_chart(dimension, clickData):
-    if clickData is None:
+    Input('map', 'selectedData'))
+def display_bar_chart(dimension, selectedData):
+    if selectedData is None:
         location = "All Submitters"
         org_level = "National"
     else:
-        location = clickData["points"][0]["location"]
+        location = selectedData["points"][0]["location"]
         org_level = "NHS England (Region)"
     fig = get_bar_chart(org_level, dimension, location)
     return fig
 
 
+
 @callback(
     Output('map', 'figure'),
-    Input('dimension-dropdown', 'value'))
-def display_map(dimension):
-    fig = get_map(org_level, dimension)
-    return fig
+    Output('selectedpoints', 'children'),
+    Input('dimension-dropdown', 'value'),
+    Input('map', 'selectedData'))
+def display_map(dimension, selectedData):
+    if selectedData is None:
+        selectedpoints = None
+    else:
+        selectedpoints = [point["pointIndex"] for point in selectedData["points"]]
+    fig = get_map(org_level, dimension, selectedpoints=selectedpoints)
+    return fig, json.dumps(selectedpoints)
 
 if __name__ == '__main__':
     app.run(debug=True)
