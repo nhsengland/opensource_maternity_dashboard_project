@@ -121,6 +121,17 @@ measure_dict = {
     }
 }
 
+region_order = {"London": 0, 
+                "South East": 1,
+                "South West": 2,
+                "Midlands": 3,
+                "North East and Yorkshire":4,
+                "East of England": 5,
+                "North West":6}
+
+
+
+
 """
 Dimensions still to be considered:
 BirthweightTermGroup
