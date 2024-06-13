@@ -12,11 +12,13 @@ import config
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 org_level =  "NHS England (Region)"
+#org_level = "Provider"
 dimension = "AgeAtBookingMotherGroup"
 
 def get_map(org_level, dimension, selectedpoints=None):
     # Get map data in the correct format
     df = process_data.return_data_for_map(dimension, org_level, config.measure_dict)
+    
     geo_df = gpd.read_file("data/NHS_England_Regions_April_2021_EN_BUC_2022.geojson")
     geo_df = geo_df.to_crs(epsg='4326')
     geo_df = geo_df[["NHSER21NM", "geometry"]].set_index("NHSER21NM")
@@ -36,9 +38,38 @@ def get_map(org_level, dimension, selectedpoints=None):
     fig.update_layout(clickmode='event+select')
     if selectedpoints is not None:
         fig.update_traces(selectedpoints=selectedpoints)
+
+
+
+    
+    # do this separate function
+    if org_level == "Provider":
+        df = process_data.return_data_for_map(dimension, "Provider", config.measure_dict)
+        percent_col = config.measure_dict[dimension]["rate_col"]
+
+        fig.add_trace(
+            go.Scattermapbox(
+                lat=df['latitude'],
+                lon=df['longitude'],
+                mode='markers',
+                marker=go.scattermapbox.Marker(
+                    size=20,
+                    color = df['Percent'],
+                    colorscale=nhs_colors
+                ),
+                text=df.apply(lambda row: f"{row['region_name']}<br>{row[percent_col]}%", axis=1),
+                hoverinfo='text'
+            )
+        )
     return fig
 
+
 def get_bar_chart(org_level, dimension, location):
+
+    #edit this: have this decide which of two bar chart functions to call
+    # create two funcs for bar chart or special bar chart
+
+
     df_location = process_data.return_data_for_bar_chart(dimension, org_level, location)
     df_all_submitters = process_data.return_data_for_bar_chart(dimension, "National", "All Submitters")
 
@@ -66,6 +97,8 @@ def get_bar_chart(org_level, dimension, location):
     return fig
 
 
+
+
 # the style arguments for the sidebar. We use position:fixed and a fixed width
 SIDEBAR_STYLE = {
     "position": "fixed",
@@ -91,6 +124,11 @@ sidebar = html.Div(
         html.Hr(),
         html.P(
             "A simple sidebar layout", className="lead"
+        ),
+        dcc.RadioItems(
+        options=['NHS England (Region)', 'Provider'],
+        value='NHS England (Region)',
+        id = "org_level_button"
         ),
         dcc.Dropdown(list(config.measure_dict.keys()), dimension, id='dimension-dropdown'),
     ],
@@ -143,12 +181,6 @@ def display_click_data(clickData):
     return json.dumps(clickData, indent=2)
 
 
-# callback(
-#     Output('selectedpoints', 'children'),
-#     Input('map', 'selectedData'))
-# def display_click_data(clickData):
-#     return json.dumps(clickData, indent=2)
-
 
 @callback(
     Output('bar-chart', 'figure'),
@@ -165,13 +197,13 @@ def display_bar_chart(dimension, selectedData):
     return fig
 
 
-
 @callback(
     Output('map', 'figure'),
     Output('selectedpoints', 'children'),
     Input('dimension-dropdown', 'value'),
-    Input('map', 'selectedData'))
-def display_map(dimension, selectedData):
+    Input('map', 'selectedData'),
+    Input('org_level_button', 'value'))
+def display_map(dimension, selectedData, org_level):
     if selectedData is None:
         selectedpoints = None
     else:

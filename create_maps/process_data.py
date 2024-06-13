@@ -1,4 +1,7 @@
 import pandas as pd
+import sys
+sys.path.append('./')
+import config
 
 
 def map_org_name(df):
@@ -49,8 +52,13 @@ def filter_for_measure_and_level(df, dimension, org_level):
     # TODO: Implement error handling for invalid dimension or org_level values
 
     # Filter the DataFrame to only include rows with the specified organisation level and dimension
+
     df_filtered = df[df["Org_Level"] == org_level]
+
+
     df_filtered = df_filtered[df_filtered["Dimension"] == dimension]
+
+
 
     return df_filtered
 
@@ -69,15 +77,20 @@ def get_rates(df, dimension, measure_dict):
     Returns:
     pandas.DataFrame: DataFrame with the calculated rates for the specified dimension.
     """
+
     # Pivot the DataFrame to have 'Measure' values as columns and 'region_name' as the index
     df_pivoted = df.pivot(columns="Measure", values="Value", index="region_name")
     
     # Reset the index to convert 'region_name' from index to a column
     df_pivoted = df_pivoted.reset_index()
+
     
     # Calculate the rate by dividing the sum of the numerator by the sum of the denominator
+    #breakpoint()
     numerator_sum = df_pivoted[measure_dict[dimension]["numerator"]].sum(axis=1)
+
     denominator_sum = df_pivoted[measure_dict[dimension]["denominator"]].sum(axis=1)
+
     df_pivoted["Rate"] = numerator_sum / denominator_sum
     
     return df_pivoted
@@ -102,11 +115,22 @@ def join_pop_data(df):
     # Aggregate the population data by region name and code, summing the total population and merge together
     df_pop_agg = df_pop.groupby(['NSHER 2023 Name', 'NHSER 2023 Code'])['Total'].sum().reset_index()
     joined_df = df.merge(df_pop_agg, left_on="region_name", right_on="NSHER 2023 Name", how="left")
-    
+
     # Calculate the rate using the ONS population estimates as the denominator
     joined_df["Rate"] = joined_df['Value'] / joined_df['Total']
     
     return joined_df
+
+def join_lat_lon_data(df):
+    """
+    Join the latitude and longitude data onto the main df, using the Org_Code
+    """
+
+    df_lat_lon = pd.read_csv("data/locations.csv")
+
+    merged_df = pd.merge(df, df_lat_lon, left_on='Org_Code', right_on='org_code', how='left')
+
+    return merged_df
 
 
 def return_data_for_map(dimension, org_level, measure_dict):
@@ -125,17 +149,26 @@ def return_data_for_map(dimension, org_level, measure_dict):
     # Read the initial dataset from the CSV file, map names and filter
     df = pd.read_csv("data/hosp-epis-stat-mat-msdscsv-2022-23.csv")
     df = map_org_name(df)
+    df = join_lat_lon_data(df)
+
     df = filter_for_measure_and_level(df, dimension, org_level)
+    
     
     # If the dimension is 'TotalBabies' or 'TotalDeliveries', join population data and calculate rates
     if dimension == "TotalBabies" or dimension == "TotalDeliveries":
-        df = join_pop_data(df)
-        df["Rate"] = df["Rate"] * 1000
+        df_rates = join_pop_data(df)
+        df_rates["Rate"] = df_rates["Rate"] * 1000
     else:
         # For other dimensions, calculate rates using the provided measure dictionary
-        df = get_rates(df, dimension, measure_dict)
-        df["Percent"] = df["Rate"] * 100
+        df_rates = get_rates(df, dimension, measure_dict)
+        df_rates["Percent"] = df_rates["Rate"] * 100
+
+    #merge the lat and lon back in
+    df = df_rates.merge(df[['region_name', 'latitude', 'longitude']], on='region_name', how='left')
     
+    #Enforce region order
+    df = df.sort_values("region_name", key=lambda col:col.map(config.region_order), ignore_index=True)
+
     return df
 
 def return_data_for_bar_chart(dimension, org_level, location):
