@@ -185,14 +185,22 @@ def display_click_data(clickData):
 @callback(
     Output('bar-chart', 'figure'),
     Input('dimension-dropdown', 'value'),
-    Input('map', 'selectedData'))
-def display_bar_chart(dimension, selectedData):
+    Input('map', 'selectedData'),
+    Input('org_level_button', 'value'))
+def display_bar_chart(dimension, selectedData, org_level):
     if selectedData is None:
         location = "All Submitters"
         org_level = "National"
     else:
-        location = selectedData["points"][0]["location"]
-        org_level = "NHS England (Region)"
+        if org_level == "NHS England (Region)":
+            location = selectedData["points"][0]["location"]
+        elif org_level == "Provider":
+            location = selectedData["points"][0]["text"].split('<br>')[0]
+
+    #callback error here:
+    # happens when I have clicked on map (region/provider) and then switch to other view
+    # There's no locations that it can highlight, because it's done differently so it fails to update anything
+    # think I would prefer going back to All Submitters although not sure how to achieve this
     fig = get_bar_chart(org_level, dimension, location)
     return fig
 
