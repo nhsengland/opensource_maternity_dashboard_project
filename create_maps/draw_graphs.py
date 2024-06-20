@@ -98,7 +98,7 @@ def draw_bar_chart(org_level, dimension, year, location):
     df_merged = process_data.merge_total_submitters(df_location, df_all_submitters)
 
     # Create the bar chart
-    fig = px.bar(df_merged, x="Measure", y="Value", title=f"{location}: {dimension}. Bar chart of broken down data, with markers comparing to All Submitters for {year}")
+    fig = px.bar(df_merged, x="Measure", y="Value", title=f"{location}: {dimension} {year} - Bar chart of broken down data, with markers comparing to All Submitters.")
     
     # Add custom markers for All Submitters
     fig.add_trace(
