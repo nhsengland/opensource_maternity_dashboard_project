@@ -69,7 +69,7 @@ sidebar = html.Div(
         ),
         html.P("Pick a year to see the data", className="lead"),
         dcc.RadioItems(
-        options=['2022-23', '2021-22', '2020-21'],
+        options=['2022-23', '2021-22'],
         value='2022-23',
         id = "year_button"
         ),
@@ -133,19 +133,27 @@ def display_click_data(clickData):
     Input('org_level_button', 'value'),
     Input('year_button', 'value'))
 def display_bar_chart(dimension, selectedData, org_level, year):
+    location = "All Submitters"
+
     if selectedData is None:
-        location = "All Submitters"
         org_level = "National"
     else:
         if org_level == "NHS England (Region)":
-            location = selectedData["points"][0]["location"]
-        elif org_level == "Provider":
-            location = selectedData["points"][0]["text"].split('<br>')[0]
+            if "location" in selectedData["points"][0]:
+                location = selectedData["points"][0]["location"]
+            else:
+                org_level = "National"
 
-    #callback error here:
-    # happens when I have clicked on map (region/provider) and then switch to other view
-    # There's no locations that it can highlight, because it's done differently so it fails to update anything
-    # think I would prefer going back to All Submitters although not sure how to achieve this
+        elif org_level == "Provider":
+            if "text" in selectedData["points"][0]:
+                location = selectedData["points"][0]["text"].split('<br>')[0]
+            else: 
+                org_level = "National"
+
+
+    # I have fixed this so it will now revert to a bar chart of all submitters when flicking between org levels
+    # before, i was getting callback errors because it couldn't find a location
+    # is reverting to all submitters the best thing?
     fig = get_bar_chart(org_level, dimension, year, location)
     return fig
 
