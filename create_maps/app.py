@@ -12,12 +12,12 @@ import config
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 org_level =  "NHS England (Region)"
-
 dimension = "AgeAtBookingMotherGroup"
+year = "2022-23"
 
-def get_map(org_level, dimension, selectedpoints=None):
+def get_map(org_level, dimension, year, selectedpoints=None):
     # Get map data in the correct format
-    df = process_data.return_data_for_map(dimension, org_level, config.measure_dict)
+    df = process_data.return_data_for_map(dimension, org_level, config.measure_dict, year)
     
     geo_df = gpd.read_file("data/NHS_England_Regions_April_2021_EN_BUC_2022.geojson")
     geo_df = geo_df.to_crs(epsg='4326')
@@ -34,7 +34,7 @@ def get_map(org_level, dimension, selectedpoints=None):
                                 zoom=5.5)
 
 
-    fig.update_layout(title_text=config.measure_dict[dimension]["map_title"])
+    fig.update_layout(title_text=f'{config.measure_dict[dimension]["map_title"]} for {year}')
     fig.update_layout(clickmode='event+select')
     if selectedpoints is not None:
         fig.update_traces(selectedpoints=selectedpoints)
@@ -44,7 +44,7 @@ def get_map(org_level, dimension, selectedpoints=None):
     
     # do this separate function
     if org_level == "Provider":
-        df = process_data.return_data_for_map(dimension, "Provider", config.measure_dict)
+        df = process_data.return_data_for_map(dimension, "Provider", config.measure_dict, year)
         percent_col = config.measure_dict[dimension]["rate_col"]
 
         fig.add_trace(
@@ -55,36 +55,38 @@ def get_map(org_level, dimension, selectedpoints=None):
                 marker=go.scattermapbox.Marker(
                     size=20,
                     color = df['Percent'],
-                    colorscale=nhs_colors
+                    colorscale=nhs_colors,
+                    #opacity=0.7 #this doesn't seem to be doing anything.....
+                    
                 ),
                 text=df.apply(lambda row: f"{row['region_name']}<br>{row[percent_col]}%", axis=1),
                 hoverinfo='text'
             )
         )
+    fig.update_layout(clickmode='event+select')
+    if selectedpoints is not None:
+        # update color here 
+        fig.update_traces(selectedpoints=selectedpoints)
+        
     return fig
 
 
-def get_bar_chart(org_level, dimension, location):
+def draw_special_bar_chart(dimension, year):
+    df = process_data.return_data_for_special_bar_chart(dimension, year)
+    # Create the bar chart
+    # Should this be the rate (reflection of map) or the raw numbers
+    fig = px.bar(df, x="Org_Name", y="Rate", title=f"{dimension}. Bar chart showing the rate of {dimension} per 1000 people for {year}")
+    return fig
 
-    #edit this: have this decide which of two bar chart functions to call
-    # create two funcs for bar chart or special bar chart
-    
-    if dimension == "TotalBabies" or dimension == "TotalDeliveries":
-        df = process_data.return_data_for_special_bar_chart(dimension)
-        # Create the bar chart
-        # Should this be the rate (reflection of map) or the raw numbers
-        fig = px.bar(df, x="Org_Name", y="Rate", title=f"{dimension}. Bar chart showing the rate of {dimension} per 1000 people")
-        return fig
-
-
-    df_location = process_data.return_data_for_bar_chart(dimension, org_level, location)
-    df_all_submitters = process_data.return_data_for_bar_chart(dimension, "National", "All Submitters")
+def draw_bar_chart(org_level, dimension, year, location):
+    df_location = process_data.return_data_for_bar_chart(dimension, org_level, location, year)
+    df_all_submitters = process_data.return_data_for_bar_chart(dimension, "National", "All Submitters", year)
 
     # Merge together the df with the All Submitters data to get marker data
     df_merged = process_data.merge_total_submitters(df_location, df_all_submitters)
 
     # Create the bar chart
-    fig = px.bar(df_merged, x="Measure", y="Value", title=f"{location}: {dimension}. Bar chart of broken down data, with markers comparing to All Submitters")
+    fig = px.bar(df_merged, x="Measure", y="Value", title=f"{location}: {dimension}. Bar chart of broken down data, with markers comparing to All Submitters for {year}")
     
     # Add custom markers for All Submitters
     fig.add_trace(
@@ -100,9 +102,19 @@ def get_bar_chart(org_level, dimension, location):
             )
         )
     )
+    return fig
+    
+
+def get_bar_chart(org_level, dimension, year, location):
+
+    # change this to a variavle within config
+    if dimension == "TotalBabies" or dimension == "TotalDeliveries":
+        fig = draw_special_bar_chart(dimension, year)
+
+    else:
+        fig = draw_bar_chart(org_level, dimension, year, location)
     
     return fig
-
 
 
 
@@ -137,6 +149,13 @@ sidebar = html.Div(
         value='NHS England (Region)',
         id = "org_level_button"
         ),
+        html.P("Pick a year to see the data", className="lead"),
+        dcc.RadioItems(
+        options=['2022-23', '2021-22', '2020-21'],
+        value='2022-23',
+        id = "year_button"
+        ),
+        html.P("Pick a measure to view", className="lead"),
         dcc.Dropdown(list(config.measure_dict.keys()), dimension, id='dimension-dropdown'),
     ],
     style=SIDEBAR_STYLE,
@@ -148,14 +167,14 @@ content = html.Div(
             dbc.Col(
                 dcc.Graph(
                     id='map',
-                    figure=get_map(org_level, dimension),
+                    figure=get_map(org_level, dimension, year),
                     style={"height": "800px"}
                 ), width=5, style={"padding": "0"}
             ),
             dbc.Col(
                 dcc.Graph(
                     id='bar-chart',
-                    figure=get_bar_chart(org_level, dimension, location="All Submitters"),
+                    figure=get_bar_chart(org_level, dimension, year, location="All Submitters"),
                     style={"height": "800px"}
                 ), width=7, style={"padding": "0"} 
             )
@@ -193,8 +212,9 @@ def display_click_data(clickData):
     Output('bar-chart', 'figure'),
     Input('dimension-dropdown', 'value'),
     Input('map', 'selectedData'),
-    Input('org_level_button', 'value'))
-def display_bar_chart(dimension, selectedData, org_level):
+    Input('org_level_button', 'value'),
+    Input('year_button', 'value'))
+def display_bar_chart(dimension, selectedData, org_level, year):
     if selectedData is None:
         location = "All Submitters"
         org_level = "National"
@@ -208,7 +228,7 @@ def display_bar_chart(dimension, selectedData, org_level):
     # happens when I have clicked on map (region/provider) and then switch to other view
     # There's no locations that it can highlight, because it's done differently so it fails to update anything
     # think I would prefer going back to All Submitters although not sure how to achieve this
-    fig = get_bar_chart(org_level, dimension, location)
+    fig = get_bar_chart(org_level, dimension, year, location)
     return fig
 
 
@@ -217,13 +237,14 @@ def display_bar_chart(dimension, selectedData, org_level):
     Output('selectedpoints', 'children'),
     Input('dimension-dropdown', 'value'),
     Input('map', 'selectedData'),
-    Input('org_level_button', 'value'))
-def display_map(dimension, selectedData, org_level):
+    Input('org_level_button', 'value'),
+    Input('year_button', 'value'))
+def display_map(dimension, selectedData, org_level, year):
     if selectedData is None:
         selectedpoints = None
     else:
         selectedpoints = [point["pointIndex"] for point in selectedData["points"]]
-    fig = get_map(org_level, dimension, selectedpoints=selectedpoints)
+    fig = get_map(org_level, dimension, year, selectedpoints=selectedpoints)
     return fig, json.dumps(selectedpoints)
 
 if __name__ == '__main__':

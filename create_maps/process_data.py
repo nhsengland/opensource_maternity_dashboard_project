@@ -110,6 +110,7 @@ def join_pop_data(df):
                       with an additional 'Rate' column calculated using ONS population estimates as the denominator.
     """
     # Read the population data from the specified Excel file and sheet
+    #This will need updated based on year!!!!!!!
     df_pop = pd.read_excel("data/ons_2022-23_pop_health_geos.xlsx", sheet_name="Mid-2022 ICB 2023", header=3)
     
     # Aggregate the population data by region name and code, summing the total population and merge together
@@ -133,7 +134,7 @@ def join_lat_lon_data(df):
     return merged_df
 
 
-def return_data_for_map(dimension, org_level, measure_dict):
+def return_data_for_map(dimension, org_level, measure_dict, year):
     """
     Returns a DataFrame fully processed and ready to create a map.
 
@@ -147,7 +148,7 @@ def return_data_for_map(dimension, org_level, measure_dict):
     geopandas.GeoDataFrame: A GeoDataFrame containing the processed data ready for map creation.
     """
     # Read the initial dataset from the CSV file, map names and filter
-    df = pd.read_csv("data/hosp-epis-stat-mat-msdscsv-2022-23.csv")
+    df = pd.read_csv(config.data_source[year])
     df = map_org_name(df)
     df = join_lat_lon_data(df)
 
@@ -171,19 +172,19 @@ def return_data_for_map(dimension, org_level, measure_dict):
 
     return df
 
-def return_data_for_bar_chart(dimension, org_level, location):
+def return_data_for_bar_chart(dimension, org_level, location, year):
     # Read the initial dataset from the CSV file, map names and filter     
-    df = pd.read_csv("data/hosp-epis-stat-mat-msdscsv-2022-23.csv")
+    df = pd.read_csv(config.data_source[year])
     df = map_org_name(df)
     df = filter_for_measure_and_level(df, dimension, org_level)
     df = df[df["region_name"] == location]
     return df
 
-def return_data_for_special_bar_chart(dimension):
+def return_data_for_special_bar_chart(dimension, year):
     # This will return data to create a bar chart with Region on the X and Value/Rate on the Y
     # This is for TotalBabies/Deliveries
 
-    df = pd.read_csv("data/hosp-epis-stat-mat-msdscsv-2022-23.csv")
+    df = pd.read_csv(config.data_source[year])
     df = map_org_name(df)
     df = filter_for_measure_and_level(df, dimension, "NHS England (Region)")
     df = join_pop_data(df)
