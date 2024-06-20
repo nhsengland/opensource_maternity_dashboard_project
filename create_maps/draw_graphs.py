@@ -31,6 +31,7 @@ def draw_region_map(org_level, dimension, year, selectedpoints=None):
 
     fig.update_layout(title_text=f'{config.measure_dict[dimension]["map_title"]} for {year}')
     fig.update_layout(clickmode='event+select')
+
     if selectedpoints is not None:
         fig.update_traces(selectedpoints=selectedpoints)
 

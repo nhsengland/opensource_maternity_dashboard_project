@@ -154,7 +154,6 @@ def return_data_for_map(dimension, org_level, measure_dict, year):
 
     df = filter_for_measure_and_level(df, dimension, org_level)
     
-    
     # If the dimension is 'TotalBabies' or 'TotalDeliveries', join population data and calculate rates
     if dimension in config.special_dimensions:
         df_rates = join_pop_data(df)
@@ -165,7 +164,7 @@ def return_data_for_map(dimension, org_level, measure_dict, year):
         df_rates["Percent"] = df_rates["Rate"] * 100
 
     #merge the lat and lon back in
-    df = df_rates.merge(df[['region_name', 'latitude', 'longitude']], on='region_name', how='left')
+    df = df_rates.merge(df[['region_name', 'latitude', 'longitude']].drop_duplicates(), on='region_name', how='left')
     
     #Enforce region order
     df = df.sort_values("region_name", key=lambda col:col.map(config.region_order), ignore_index=True)

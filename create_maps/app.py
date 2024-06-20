@@ -18,9 +18,9 @@ year = "2022-23"
 
 def get_map(org_level, dimension, year, selectedpoints=None):
     if org_level == "NHS England (Region)":
-        fig = draw_graphs.draw_region_map(org_level, dimension, year, selectedpoints=None)
+        fig = draw_graphs.draw_region_map(org_level, dimension, year, selectedpoints)
     if org_level == "Provider":
-        fig = draw_graphs.draw_provider_map(org_level, dimension, year, selectedpoints=None)
+        fig = draw_graphs.draw_provider_map(org_level, dimension, year, selectedpoints)
     return fig
 
 def get_bar_chart(org_level, dimension, year, location):
@@ -99,7 +99,7 @@ content = html.Div(
         ]
     ),
             html.Div([
-            html.Pre(id='click-data')
+            html.Pre(id='selectedData')
         ]),   
 
     html.Div([
@@ -118,11 +118,11 @@ app.layout = html.Div([
 ])
 
 
-@callback(
-    Output('click-data', 'children'),
-    Input('map', 'selectedData'))
-def display_click_data(clickData):
-    return json.dumps(clickData, indent=2)
+# @callback(
+#     Output('click-data', 'children'),
+#     Input('map', 'selectedData'))
+# def display_click_data(clickData):
+#     return json.dumps(clickData, indent=2)
 
 
 
@@ -160,18 +160,22 @@ def display_bar_chart(dimension, selectedData, org_level, year):
 
 @callback(
     Output('map', 'figure'),
+    Output('selectedData', 'children'),
     Output('selectedpoints', 'children'),
     Input('dimension-dropdown', 'value'),
     Input('map', 'selectedData'),
     Input('org_level_button', 'value'),
     Input('year_button', 'value'))
 def display_map(dimension, selectedData, org_level, year):
+
     if selectedData is None:
         selectedpoints = None
     else:
         selectedpoints = [point["pointIndex"] for point in selectedData["points"]]
+
     fig = get_map(org_level, dimension, year, selectedpoints=selectedpoints)
-    return fig, json.dumps(selectedpoints)
+
+    return fig, json.dumps(selectedData), json.dumps(selectedpoints)
 
 if __name__ == '__main__':
     app.run(debug=True)
