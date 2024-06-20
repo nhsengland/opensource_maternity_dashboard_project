@@ -12,7 +12,7 @@ import config
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 org_level =  "NHS England (Region)"
-#org_level = "Provider"
+
 dimension = "AgeAtBookingMotherGroup"
 
 def get_map(org_level, dimension, selectedpoints=None):
@@ -68,6 +68,13 @@ def get_bar_chart(org_level, dimension, location):
 
     #edit this: have this decide which of two bar chart functions to call
     # create two funcs for bar chart or special bar chart
+    
+    if dimension == "TotalBabies" or dimension == "TotalDeliveries":
+        df = process_data.return_data_for_special_bar_chart(dimension)
+        # Create the bar chart
+        # Should this be the rate (reflection of map) or the raw numbers
+        fig = px.bar(df, x="Org_Name", y="Rate", title=f"{dimension}. Bar chart showing the rate of {dimension} per 1000 people")
+        return fig
 
 
     df_location = process_data.return_data_for_bar_chart(dimension, org_level, location)

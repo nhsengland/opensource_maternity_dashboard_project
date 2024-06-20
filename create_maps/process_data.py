@@ -172,11 +172,24 @@ def return_data_for_map(dimension, org_level, measure_dict):
     return df
 
 def return_data_for_bar_chart(dimension, org_level, location):
-    # Read the initial dataset from the CSV file, map names and filter
+    # Read the initial dataset from the CSV file, map names and filter     
     df = pd.read_csv("data/hosp-epis-stat-mat-msdscsv-2022-23.csv")
     df = map_org_name(df)
     df = filter_for_measure_and_level(df, dimension, org_level)
     df = df[df["region_name"] == location]
+    return df
+
+def return_data_for_special_bar_chart(dimension):
+    # This will return data to create a bar chart with Region on the X and Value/Rate on the Y
+    # This is for TotalBabies/Deliveries
+
+    df = pd.read_csv("data/hosp-epis-stat-mat-msdscsv-2022-23.csv")
+    df = map_org_name(df)
+    df = filter_for_measure_and_level(df, dimension, "NHS England (Region)")
+    df = join_pop_data(df)
+    df["Rate"] = df["Rate"] * 1000
+
+
     return df
 
 
