@@ -156,7 +156,7 @@ def return_data_for_map(dimension, org_level, measure_dict, year):
     
     
     # If the dimension is 'TotalBabies' or 'TotalDeliveries', join population data and calculate rates
-    if dimension == "TotalBabies" or dimension == "TotalDeliveries":
+    if dimension in config.special_dimensions:
         df_rates = join_pop_data(df)
         df_rates["Rate"] = df_rates["Rate"] * 1000
     else:
@@ -189,7 +189,6 @@ def return_data_for_special_bar_chart(dimension, year):
     df = filter_for_measure_and_level(df, dimension, "NHS England (Region)")
     df = join_pop_data(df)
     df["Rate"] = df["Rate"] * 1000
-
 
     return df
 
