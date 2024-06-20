@@ -133,6 +133,7 @@ data_source = {"2022-23": "data/hosp-epis-stat-mat-msdscsv-2022-23.csv",
                 "2021-22": "data/hosp-epis-stat-mat-msdscsv-2021-22.csv",
                 "2020-21": "data/hosp-epis-stat-mat-msdscsv-2020-21.csv"}
 
+special_dimensions = ["TotalBabies", "TotalDeliveries"]
 
 """
 Dimensions still to be considered:
