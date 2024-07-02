@@ -1,4 +1,4 @@
-from dash import Dash, dcc, html, Input, Output, callback
+from dash import Dash, dcc, html, Input, Output, callback, ctx
 import process_data, draw_graphs
 import plotly.express as px
 import sys
@@ -14,6 +14,7 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 org_level =  "NHS England (Region)"
 dimension = "AgeAtBookingMotherGroup"
 year = "2022-23"
+chart_type = "Bar Chart"
 
 
 def get_map(org_level, dimension, year, selectedpoints=None):
@@ -23,17 +24,18 @@ def get_map(org_level, dimension, year, selectedpoints=None):
         fig = draw_graphs.draw_provider_map(org_level, dimension, year, selectedpoints)
     return fig
 
-def get_bar_chart(org_level, dimension, year, location):
+def get_chart(org_level, dimension, year, chart_type, location):
+    if chart_type == "Bar Chart":
+        # change this to a variavle within config
+        if dimension in config.special_dimensions:
+            fig = draw_graphs.draw_special_bar_chart(dimension, year)
 
-    # change this to a variavle within config
-    if dimension in config.special_dimensions:
-        fig = draw_graphs.draw_special_bar_chart(dimension, year)
-
+        else:
+            fig = draw_graphs.draw_bar_chart(org_level, dimension, year, location)
     else:
-        fig = draw_graphs.draw_bar_chart(org_level, dimension, year, location)
+        fig = draw_graphs.draw_time_series(org_level, dimension, location) 
     
     return fig
-
 
 
 # the style arguments for the sidebar. We use position:fixed and a fixed width
@@ -74,7 +76,13 @@ sidebar = html.Div(
         id = "year_button"
         ),
         html.P("Pick a measure to view", className="lead"),
-        dcc.Dropdown(list(config.measure_dict.keys()), dimension, id='dimension-dropdown'),
+        dcc.Dropdown(list(config.measure_dict.keys()), dimension, id='dimension-dropdown'), #this might need updated for region/provider. 
+        html.P("View the Bar chart or time series", className="lead"),
+        dcc.RadioItems(
+        options=['Bar Chart', 'Time Series'],
+        value='Bar Chart',
+        id = "chart_button"
+        ),
     ],
     style=SIDEBAR_STYLE,
 )
@@ -92,7 +100,7 @@ content = html.Div(
             dbc.Col(
                 dcc.Graph(
                     id='bar-chart',
-                    figure=get_bar_chart(org_level, dimension, year, location="All Submitters"),
+                    figure=get_chart(org_level, dimension, year, chart_type, location="All Submitters"),
                     style={"height": "800px"}
                 ), width=7, style={"padding": "0"} 
             )
@@ -131,8 +139,9 @@ app.layout = html.Div([
     Input('dimension-dropdown', 'value'),
     Input('map', 'selectedData'),
     Input('org_level_button', 'value'),
-    Input('year_button', 'value'))
-def display_bar_chart(dimension, selectedData, org_level, year):
+    Input('year_button', 'value'),
+    Input('chart_button', 'value'))
+def display_chart(dimension, selectedData, org_level, year, chart_type):
     location = "All Submitters"
 
     if selectedData is None:
@@ -154,7 +163,7 @@ def display_bar_chart(dimension, selectedData, org_level, year):
     # I have fixed this so it will now revert to a bar chart of all submitters when flicking between org levels
     # before, i was getting callback errors because it couldn't find a location
     # is reverting to all submitters the best thing?
-    fig = get_bar_chart(org_level, dimension, year, location)
+    fig = get_chart(org_level, dimension, year, chart_type, location)
     return fig
 
 
@@ -168,7 +177,7 @@ def display_bar_chart(dimension, selectedData, org_level, year):
     Input('year_button', 'value'))
 def display_map(dimension, selectedData, org_level, year):
 
-    if selectedData is None:
+    if selectedData is None or ctx.triggered_id == "org_level_button":
         selectedpoints = None
     else:
         selectedpoints = [point["pointIndex"] for point in selectedData["points"]]

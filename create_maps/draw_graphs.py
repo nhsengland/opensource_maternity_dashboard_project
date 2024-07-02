@@ -3,6 +3,7 @@ import process_data
 import plotly.express as px
 import sys
 import geopandas as gpd
+import pandas as pd
 import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 import json
@@ -67,7 +68,7 @@ def draw_provider_map(org_level, dimension, year, selectedpoints=None):
                 mode='markers',
                 marker=go.scattermapbox.Marker(
                     size=20,
-                    color = df['Percent'],
+                    color = df['Percent'], #this doesn't work for special dims need to disable it somehow
                     colorscale=nhs_colors                   
                 ),
                 text=df.apply(lambda row: f"{row['region_name']}<br>{row[percent_col]}%", axis=1),
@@ -116,4 +117,52 @@ def draw_bar_chart(org_level, dimension, year, location):
         )
     )
     return fig
+
+
+
+def draw_time_series(org_level, dimension, location):
+    df_location = process_data.return_data_for_time_series(dimension, org_level, location)
+    df_all_submitters = process_data.return_data_for_time_series(dimension, "National", "All Submitters")
+
+    # Merge together the df with the All Submitters data to get marker data
+    df_merged = process_data.merge_total_submitters(df_location, df_all_submitters, by_year=True)
+
+    # Strip the first characters to get numeric year for sorting
+    df_merged['numeric_year'] = df_merged['year'].str.split('-').str[0].astype(int)
+
+    # Sort by numeric year
+    df_merged = df_merged.sort_values(by='numeric_year')
+
+    # Create custom hover text
+    df_merged['hover_text'] = df_merged.apply(
+        lambda row: f"Year: {row['year']}<br>Measure: {row['Measure']}<br>Value: {row['Value']}", axis=1)
     
+    # Create the time series line graph with custom hover text
+    fig = px.line(df_merged, x="year", y="Value", color="Measure", 
+                  title=f"{location}: {dimension} - Time Series",
+                  hover_data={'hover_text': True})
+    
+    # Update hover data to use custom text
+    fig.update_traces(hovertemplate='%{customdata}')
+    
+    # Add round, black dots at each point in the graph
+    for measure in df_merged['Measure'].unique():
+        df_measure = df_merged[df_merged['Measure'] == measure]
+
+        fig.add_trace(
+            go.Scatter(
+                x=df_measure['year'], 
+                y=df_measure['Value'], 
+                mode='markers',
+                name=f'{measure} Dots',
+                marker=dict(
+                    symbol='circle',
+                    size=6,
+                    color='black'
+                ),
+                hoverinfo='skip',  # Skip hover info for markers to avoid redundancy
+                showlegend=False  # Do not show legend entry for this trace
+            )
+        )
+
+    return fig

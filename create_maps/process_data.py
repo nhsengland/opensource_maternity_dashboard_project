@@ -112,7 +112,8 @@ def join_pop_data(df):
     # Read the population data from the specified Excel file and sheet
     #This will need updated based on year!!!!!!!
     df_pop = pd.read_excel("data/ons_2022-23_pop_health_geos.xlsx", sheet_name="Mid-2022 ICB 2023", header=3)
-    
+    df_pop = df_pop[['NSHER 2023 Name', 'NHSER 2023 Code', 'Total']]
+
     # Aggregate the population data by region name and code, summing the total population and merge together
     df_pop_agg = df_pop.groupby(['NSHER 2023 Name', 'NHSER 2023 Code'])['Total'].sum().reset_index()
     joined_df = df.merge(df_pop_agg, left_on="region_name", right_on="NSHER 2023 Name", how="left")
@@ -128,7 +129,6 @@ def join_lat_lon_data(df):
     """
 
     df_lat_lon = pd.read_csv("data/locations.csv")
-
     merged_df = pd.merge(df, df_lat_lon, left_on='Org_Code', right_on='org_code', how='left')
 
     return merged_df
@@ -162,10 +162,12 @@ def return_data_for_map(dimension, org_level, measure_dict, year):
         # For other dimensions, calculate rates using the provided measure dictionary
         df_rates = get_rates(df, dimension, measure_dict)
         df_rates["Percent"] = df_rates["Rate"] * 100
-
-    #merge the lat and lon back in
-    df = df_rates.merge(df[['region_name', 'latitude', 'longitude']].drop_duplicates(), on='region_name', how='left')
+        #merge the lat and lon back in
     
+    
+    df = df_rates.merge(df[['region_name', 'latitude', 'longitude']].drop_duplicates(), on='region_name', how='left', suffixes=('', '_'))
+    print(dimension, org_level)
+    print(df)
     #Enforce region order
     df = df.sort_values("region_name", key=lambda col:col.map(config.region_order), ignore_index=True)
 
@@ -192,18 +194,55 @@ def return_data_for_special_bar_chart(dimension, year):
     return df
 
 
-def merge_total_submitters(df_location, df_all_submitters):
+def merge_total_submitters(df_location, df_all_submitters, by_year=False):
     #Merges the two dataframes together and creates the percentage for the comparison marker to All Submitters
+    if by_year:
+        total_all_submitters = df_all_submitters['Value'].sum()
+        df_all_submitters['Percentage'] = df_all_submitters['Value'] / total_all_submitters
+        
+        # Merge the percentage data with the location-specific data
+        df_merged = pd.merge(df_location, df_all_submitters[['Measure', 'Percentage']], on='Measure', suffixes=('', '_all_submitters'))
+        
+        # Calculate the marker values
+        df_merged['All Submitters Value'] = df_merged['Percentage'] * df_location['Value'].sum()
 
+    else:
     # Calculate the total value for each measure in all submitters
-    total_all_submitters = df_all_submitters['Value'].sum()
-    df_all_submitters['Percentage'] = df_all_submitters['Value'] / total_all_submitters
-    
-    # Merge the percentage data with the location-specific data
-    df_merged = pd.merge(df_location, df_all_submitters[['Measure', 'Percentage']], on='Measure', suffixes=('', '_all_submitters'))
-    
-    # Calculate the marker values
-    df_merged['All Submitters Value'] = df_merged['Percentage'] * df_location['Value'].sum()
+        total_all_submitters = df_all_submitters['Value'].sum()
+        df_all_submitters['Percentage'] = df_all_submitters['Value'] / total_all_submitters
+        
+        # Merge the percentage data with the location-specific data
+        df_merged = pd.merge(df_location, df_all_submitters[['Measure', 'Percentage']], on='Measure', suffixes=('', '_all_submitters'))
+        
+        # Calculate the marker values
+        df_merged['All Submitters Value'] = df_merged['Percentage'] * df_location['Value'].sum()
 
     return df_merged
     
+
+def return_data_for_time_series(dimension, org_level, location):
+    # Initialize an empty list to hold DataFrames
+    all_data = []
+
+    # Iterate over all years in the config
+    for year in config.data_source.keys():
+        # Read the dataset for the current year
+        df = pd.read_csv(config.data_source[year])
+        # Add the year column
+        df['year'] = year
+        # Append the DataFrame to the list
+        all_data.append(df)
+    
+    # Concatenate all DataFrames into a single DataFrame
+    combined_df = pd.concat(all_data, ignore_index=True)
+    
+    # Map organization names
+    combined_df = map_org_name(combined_df)
+    
+    # Filter for the specified measure and organization level
+    combined_df = filter_for_measure_and_level(combined_df, dimension, org_level)
+    
+    # Filter for the specified location
+    combined_df = combined_df[combined_df["region_name"] == location]
+    
+    return combined_df
