@@ -63,7 +63,7 @@ def filter_for_measure_and_level(df, dimension, org_level):
     return df_filtered
 
 
-def get_rates(df, dimension, measure_dict):
+def get_rates(df, dimension, measure_dict, org_level):
     """
     Calculates rates for a given dimension based on specified numerator and denominator
     measures, then returns the updated DataFrame with the calculated rates.
@@ -78,6 +78,7 @@ def get_rates(df, dimension, measure_dict):
     pandas.DataFrame: DataFrame with the calculated rates for the specified dimension.
     """
 
+
     # Pivot the DataFrame to have 'Measure' values as columns and 'region_name' as the index
     df_pivoted = df.pivot(columns="Measure", values="Value", index="region_name")
     
@@ -86,10 +87,9 @@ def get_rates(df, dimension, measure_dict):
 
     
     # Calculate the rate by dividing the sum of the numerator by the sum of the denominator
-    #breakpoint()
-    numerator_sum = df_pivoted[measure_dict[dimension]["numerator"]].sum(axis=1)
+    numerator_sum = df_pivoted[measure_dict[org_level][dimension]["numerator"]].sum(axis=1)
 
-    denominator_sum = df_pivoted[measure_dict[dimension]["denominator"]].sum(axis=1)
+    denominator_sum = df_pivoted[measure_dict[org_level][dimension]["denominator"]].sum(axis=1)
 
     df_pivoted["Rate"] = numerator_sum / denominator_sum
     
@@ -160,17 +160,18 @@ def return_data_for_map(dimension, org_level, measure_dict, year):
         df_rates["Rate"] = df_rates["Rate"] * 1000
     else:
         # For other dimensions, calculate rates using the provided measure dictionary
-        df_rates = get_rates(df, dimension, measure_dict)
+        df_rates = get_rates(df, dimension, measure_dict, org_level)
         df_rates["Percent"] = df_rates["Rate"] * 100
         #merge the lat and lon back in
     
     
     df = df_rates.merge(df[['region_name', 'latitude', 'longitude']].drop_duplicates(), on='region_name', how='left', suffixes=('', '_'))
-    print(dimension, org_level)
-    print(df)
     #Enforce region order
     df = df.sort_values("region_name", key=lambda col:col.map(config.region_order), ignore_index=True)
-
+    if org_level == "Provider":
+        # I think the providers have changed so sorting doesn't make the numbers consistant
+        # How could I do it without having a 200 line dictionary assigning values...
+        df = df.sort_values("region_name")
     return df
 
 def return_data_for_bar_chart(dimension, org_level, location, year):
@@ -241,8 +242,36 @@ def return_data_for_time_series(dimension, org_level, location):
     
     # Filter for the specified measure and organization level
     combined_df = filter_for_measure_and_level(combined_df, dimension, org_level)
+
+    print(combined_df)
     
     # Filter for the specified location
-    combined_df = combined_df[combined_df["region_name"] == location]
+    if dimension not in config.special_dimensions:
+        combined_df = combined_df[combined_df["region_name"] == location]
     
     return combined_df
+
+def return_data_for_special_time_series(dimension, org_level):
+    # Initialize an empty list to hold DataFrames
+    all_data = []
+
+    # Iterate over all years in the config
+    for year in config.data_source.keys():
+        # Read the dataset for the current year
+        df = pd.read_csv(config.data_source[year])
+        # Add the year column
+        df['year'] = year
+        # Append the DataFrame to the list
+        all_data.append(df)
+
+    # Concatenate all DataFrames into a single DataFrame
+    combined_df = pd.concat(all_data, ignore_index=True)
+    
+    # Map organization names
+    combined_df = map_org_name(combined_df)
+
+    combined_df = filter_for_measure_and_level(combined_df, dimension, org_level)
+
+
+    return combined_df
+    

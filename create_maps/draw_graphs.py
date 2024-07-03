@@ -23,14 +23,14 @@ def draw_region_map(org_level, dimension, year, selectedpoints=None):
     fig = px.choropleth_mapbox(df, 
                                 geojson=geo_df, 
                                 locations="region_name", 
-                                color=config.measure_dict[dimension]["rate_col"],
+                                color=config.measure_dict["NHS England (Region)"][dimension]["rate_col"],
                                 color_continuous_scale=nhs_colors,
                                 mapbox_style="carto-positron",
                                 center={"lat": 53, "lon": -2},
                                 zoom=5.5)
 
 
-    fig.update_layout(title_text=f'{config.measure_dict[dimension]["map_title"]} for {year}')
+    fig.update_layout(title_text=f'{config.measure_dict["NHS England (Region)"][dimension]["map_title"]} for {year}')
     fig.update_layout(clickmode='event+select')
 
     if selectedpoints is not None:
@@ -50,7 +50,7 @@ def draw_provider_map(org_level, dimension, year, selectedpoints=None):
     fig = px.choropleth_mapbox(df, 
                                 geojson=geo_df, 
                                 locations="region_name", 
-                                color=config.measure_dict[dimension]["rate_col"],
+                                color=config.measure_dict["Provider"][dimension]["rate_col"],
                                 color_continuous_scale=nhs_colors,
                                 mapbox_style="carto-positron",
                                 center={"lat": 53, "lon": -2},
@@ -59,7 +59,11 @@ def draw_provider_map(org_level, dimension, year, selectedpoints=None):
 
     if org_level == "Provider":
         df = process_data.return_data_for_map(dimension, "Provider", config.measure_dict, year)
-        percent_col = config.measure_dict[dimension]["rate_col"]
+        percent_col = config.measure_dict["Provider"][dimension]["rate_col"]
+        if percent_col == "Percent":
+            sign = "%"
+        else:
+            sign = ""
 
         fig.add_trace(
             go.Scattermapbox(
@@ -68,15 +72,15 @@ def draw_provider_map(org_level, dimension, year, selectedpoints=None):
                 mode='markers',
                 marker=go.scattermapbox.Marker(
                     size=20,
-                    color = df['Percent'], #this doesn't work for special dims need to disable it somehow
+                    color = df[percent_col],
                     colorscale=nhs_colors                   
                 ),
-                text=df.apply(lambda row: f"{row['region_name']}<br>{row[percent_col]}%", axis=1),
+                text=df.apply(lambda row: f"{row['region_name']}<br>{row[percent_col]}{sign}", axis=1),
                 hoverinfo='text'
             )
         )
 
-    fig.update_layout(title_text=f'{config.measure_dict[dimension]["map_title"]} for {year}')
+    fig.update_layout(title_text=f'{config.measure_dict["Provider"][dimension]["map_title"]} for {year}')
     fig.update_layout(clickmode='event+select')
     if selectedpoints is not None:
         # update color here 
@@ -91,6 +95,7 @@ def draw_special_bar_chart(dimension, year):
     # Should this be the rate (reflection of map) or the raw numbers
     fig = px.bar(df, x="Org_Name", y="Rate", title=f"{dimension}. Bar chart showing the rate of {dimension} per 1000 people for {year}")
     return fig
+
 
 def draw_bar_chart(org_level, dimension, year, location):
     df_location = process_data.return_data_for_bar_chart(dimension, org_level, location, year)
@@ -119,7 +124,6 @@ def draw_bar_chart(org_level, dimension, year, location):
     return fig
 
 
-
 def draw_time_series(org_level, dimension, location):
     df_location = process_data.return_data_for_time_series(dimension, org_level, location)
     df_all_submitters = process_data.return_data_for_time_series(dimension, "National", "All Submitters")
@@ -133,12 +137,17 @@ def draw_time_series(org_level, dimension, location):
     # Sort by numeric year
     df_merged = df_merged.sort_values(by='numeric_year')
 
+    if dimension in config.special_dimensions:
+        split_on = "Org_Name"
+    else:
+        split_on = "Measure"
+
     # Create custom hover text
     df_merged['hover_text'] = df_merged.apply(
-        lambda row: f"Year: {row['year']}<br>Measure: {row['Measure']}<br>Value: {row['Value']}", axis=1)
+        lambda row: f"Year: {row['year']}<br>{split_on}: {row[split_on]}<br>Value: {row['Value']}", axis=1)
     
     # Create the time series line graph with custom hover text
-    fig = px.line(df_merged, x="year", y="Value", color="Measure", 
+    fig = px.line(df_merged, x="year", y="Value", color=split_on, 
                   title=f"{location}: {dimension} - Time Series",
                   hover_data={'hover_text': True})
     
@@ -146,8 +155,8 @@ def draw_time_series(org_level, dimension, location):
     fig.update_traces(hovertemplate='%{customdata}')
     
     # Add round, black dots at each point in the graph
-    for measure in df_merged['Measure'].unique():
-        df_measure = df_merged[df_merged['Measure'] == measure]
+    for measure in df_merged[split_on].unique():
+        df_measure = df_merged[df_merged[split_on] == measure]
 
         fig.add_trace(
             go.Scatter(
@@ -160,8 +169,8 @@ def draw_time_series(org_level, dimension, location):
                     size=6,
                     color='black'
                 ),
-                hoverinfo='skip',  # Skip hover info for markers to avoid redundancy
-                showlegend=False  # Do not show legend entry for this trace
+                hoverinfo='skip',
+                showlegend=False 
             )
         )
 

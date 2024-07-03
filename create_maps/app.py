@@ -75,14 +75,15 @@ sidebar = html.Div(
         value='2022-23',
         id = "year_button"
         ),
-        html.P("Pick a measure to view", className="lead"),
-        dcc.Dropdown(list(config.measure_dict.keys()), dimension, id='dimension-dropdown'), #this might need updated for region/provider. 
+
         html.P("View the Bar chart or time series", className="lead"),
         dcc.RadioItems(
         options=['Bar Chart', 'Time Series'],
         value='Bar Chart',
         id = "chart_button"
         ),
+        html.P("Pick a measure to view", className="lead"),
+        dcc.Dropdown(list(config.measure_dict["NHS England (Region)"].keys()), dimension, id='dimension-dropdown'), #this might need updated for region/provider. 
     ],
     style=SIDEBAR_STYLE,
 )
