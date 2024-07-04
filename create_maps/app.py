@@ -1,5 +1,5 @@
 from dash import Dash, dcc, html, Input, Output, callback, ctx
-import process_data, draw_graphs
+import draw_graphs
 import plotly.express as px
 import sys
 import geopandas as gpd
