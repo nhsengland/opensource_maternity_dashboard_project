@@ -10,6 +10,9 @@ sys.path.append('./')
 import config
 
 
+#if debug is true display all the debug info
+
+
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 org_level =  "NHS England (Region)"
 dimension = "AgeAtBookingMotherGroup"
@@ -26,13 +29,12 @@ def get_map(org_level, dimension, year, selectedpoints=None):
 
 def get_chart(org_level, dimension, year, chart_type, location):
     if chart_type == "Bar Chart":
-        # change this to a variavle within config
         if dimension in config.special_dimensions:
             fig = draw_graphs.draw_special_bar_chart(dimension, year)
-
         else:
             fig = draw_graphs.draw_bar_chart(org_level, dimension, year, location)
     else:
+
         fig = draw_graphs.draw_time_series(org_level, dimension, location) 
     
     return fig
@@ -95,7 +97,7 @@ content = html.Div(
                 dcc.Graph(
                     id='map',
                     figure=get_map(org_level, dimension, year),
-                    style={"height": "800px"}
+                    style={"height": "800px", 'width': '800px'}
                 ), width=5, style={"padding": "0"}
             ),
             dbc.Col(
@@ -103,7 +105,7 @@ content = html.Div(
                     id='bar-chart',
                     figure=get_chart(org_level, dimension, year, chart_type, location="All Submitters"),
                     style={"height": "800px"}
-                ), width=7, style={"padding": "0"} 
+                ), width=5, style={"padding": "0"} 
             )
         ]
     ),
@@ -145,7 +147,7 @@ app.layout = html.Div([
 def display_chart(dimension, selectedData, org_level, year, chart_type):
     location = "All Submitters"
 
-    if selectedData is None:
+    if selectedData is None and not(org_level == "Provider" and dimension in config.special_dimensions and chart_type == "Time Series"):
         org_level = "National"
     else:
         if org_level == "NHS England (Region)":
@@ -154,11 +156,18 @@ def display_chart(dimension, selectedData, org_level, year, chart_type):
             else:
                 org_level = "National"
 
-        elif org_level == "Provider":
+        elif org_level == "Provider" and not(selectedData == None):
             if "text" in selectedData["points"][0]:
                 location = selectedData["points"][0]["text"].split('<br>')[0]
             else: 
                 org_level = "National"
+    if selectedData is None and org_level == "Provider" and dimension in config.special_dimensions and chart_type == "Time Series":
+        print("hi")
+        org_level = "Provider"
+    elif selectedData is not None and org_level == "Provider" and dimension in config.special_dimensions and chart_type == "Time Series":
+        print("hiiiii")
+        org_level = "Provider"
+        location = selectedData["points"][0]["text"].split('<br>')[0]
 
 
     # I have fixed this so it will now revert to a bar chart of all submitters when flicking between org levels

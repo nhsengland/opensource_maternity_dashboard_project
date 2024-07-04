@@ -27,11 +27,16 @@ def draw_region_map(org_level, dimension, year, selectedpoints=None):
                                 color_continuous_scale=nhs_colors,
                                 mapbox_style="carto-positron",
                                 center={"lat": 53, "lon": -2},
-                                zoom=5.5)
+                                zoom=5.2,
+                                width=600)
 
 
     fig.update_layout(title_text=f'{config.measure_dict["NHS England (Region)"][dimension]["map_title"]} for {year}')
     fig.update_layout(clickmode='event+select')
+
+    fig.update_coloraxes(colorbar={'orientation':'h',
+                                   'title': ""})
+    fig.update_layout(coloraxis_colorbar_y=-0.1)
 
     if selectedpoints is not None:
         fig.update_traces(selectedpoints=selectedpoints)
@@ -58,6 +63,7 @@ def draw_provider_map(org_level, dimension, year, selectedpoints=None):
 
 
     if org_level == "Provider":
+        #think the if here is redundant
         df = process_data.return_data_for_map(dimension, "Provider", config.measure_dict, year)
         percent_col = config.measure_dict["Provider"][dimension]["rate_col"]
         if percent_col == "Percent":
@@ -82,6 +88,10 @@ def draw_provider_map(org_level, dimension, year, selectedpoints=None):
 
     fig.update_layout(title_text=f'{config.measure_dict["Provider"][dimension]["map_title"]} for {year}')
     fig.update_layout(clickmode='event+select')
+
+    fig.update_coloraxes(colorbar={'orientation':'h',
+                                   'title': ""})
+    fig.update_layout(coloraxis_colorbar_y=-0.1)
     if selectedpoints is not None:
         # update color here 
         fig.update_traces(selectedpoints=selectedpoints)
@@ -121,21 +131,24 @@ def draw_bar_chart(org_level, dimension, year, location):
             )
         )
     )
+
+    fig.update_layout(legend={"yanchor": "bottom",
+                              "xanchor": "left",
+                              "y":1.01,
+                              "x":0})
+
+
     return fig
 
 
 def draw_time_series(org_level, dimension, location):
     df_location = process_data.return_data_for_time_series(dimension, org_level, location)
-    df_all_submitters = process_data.return_data_for_time_series(dimension, "National", "All Submitters")
-
-    # Merge together the df with the All Submitters data to get marker data
-    df_merged = process_data.merge_total_submitters(df_location, df_all_submitters, by_year=True)
 
     # Strip the first characters to get numeric year for sorting
-    df_merged['numeric_year'] = df_merged['year'].str.split('-').str[0].astype(int)
+    df_location['numeric_year'] = df_location['year'].str.split('-').str[0].astype(int)
 
     # Sort by numeric year
-    df_merged = df_merged.sort_values(by='numeric_year')
+    df_location = df_location.sort_values(by='numeric_year')
 
     if dimension in config.special_dimensions:
         split_on = "Org_Name"
@@ -143,11 +156,11 @@ def draw_time_series(org_level, dimension, location):
         split_on = "Measure"
 
     # Create custom hover text
-    df_merged['hover_text'] = df_merged.apply(
+    df_location['hover_text'] = df_location.apply(
         lambda row: f"Year: {row['year']}<br>{split_on}: {row[split_on]}<br>Value: {row['Value']}", axis=1)
     
     # Create the time series line graph with custom hover text
-    fig = px.line(df_merged, x="year", y="Value", color=split_on, 
+    fig = px.line(df_location, x="year", y="Value", color=split_on, 
                   title=f"{location}: {dimension} - Time Series",
                   hover_data={'hover_text': True})
     
@@ -155,8 +168,8 @@ def draw_time_series(org_level, dimension, location):
     fig.update_traces(hovertemplate='%{customdata}')
     
     # Add round, black dots at each point in the graph
-    for measure in df_merged[split_on].unique():
-        df_measure = df_merged[df_merged[split_on] == measure]
+    for measure in df_location[split_on].unique():
+        df_measure = df_location[df_location[split_on] == measure]
 
         fig.add_trace(
             go.Scatter(

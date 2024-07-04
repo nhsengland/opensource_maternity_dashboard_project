@@ -239,39 +239,18 @@ def return_data_for_time_series(dimension, org_level, location):
     
     # Map organization names
     combined_df = map_org_name(combined_df)
+
+    if dimension in config.special_dimensions and org_level == "National":
+        #This means the time series will start off showing the regions for the special dims
+        org_level = "NHS England (Region)"
     
     # Filter for the specified measure and organization level
     combined_df = filter_for_measure_and_level(combined_df, dimension, org_level)
-
-    print(combined_df)
     
     # Filter for the specified location
     if dimension not in config.special_dimensions:
         combined_df = combined_df[combined_df["region_name"] == location]
+
     
-    return combined_df
-
-def return_data_for_special_time_series(dimension, org_level):
-    # Initialize an empty list to hold DataFrames
-    all_data = []
-
-    # Iterate over all years in the config
-    for year in config.data_source.keys():
-        # Read the dataset for the current year
-        df = pd.read_csv(config.data_source[year])
-        # Add the year column
-        df['year'] = year
-        # Append the DataFrame to the list
-        all_data.append(df)
-
-    # Concatenate all DataFrames into a single DataFrame
-    combined_df = pd.concat(all_data, ignore_index=True)
-    
-    # Map organization names
-    combined_df = map_org_name(combined_df)
-
-    combined_df = filter_for_measure_and_level(combined_df, dimension, org_level)
-
-
     return combined_df
     
