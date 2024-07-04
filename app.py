@@ -1,10 +1,7 @@
 from dash import Dash, dcc, html, Input, Output, callback, ctx
 from create_maps import draw_graphs
-import plotly.express as px
 import sys
-import geopandas as gpd
 import dash_bootstrap_components as dbc
-import plotly.graph_objects as go
 import json
 sys.path.append('./')
 import config
