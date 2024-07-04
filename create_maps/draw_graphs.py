@@ -46,8 +46,8 @@ def draw_region_map(org_level, dimension, year, selectedpoints=None):
                                 color_continuous_scale=nhs_colors,
                                 mapbox_style="carto-positron",
                                 center={"lat": 53, "lon": -2},
-                                zoom=5.2,
-                                width=600)
+                                zoom=5.2
+                                )
 
 
     fig.update_layout(title_text=wrap_text(f'{config.measure_dict["NHS England (Region)"][dimension]["map_title"]} for {year}', 50))
