@@ -1,5 +1,5 @@
 
-import process_data
+from create_maps import process_data
 import plotly.express as px
 import sys
 import geopandas as gpd

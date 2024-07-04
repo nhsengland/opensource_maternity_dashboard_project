@@ -1,5 +1,5 @@
 from dash import Dash, dcc, html, Input, Output, callback, ctx
-import draw_graphs
+from create_maps import draw_graphs
 import plotly.express as px
 import sys
 import geopandas as gpd
@@ -14,6 +14,9 @@ import config
 
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+server = app.server
+
+
 org_level =  "NHS England (Region)"
 dimension = "AgeAtBookingMotherGroup"
 year = "2022-23"
