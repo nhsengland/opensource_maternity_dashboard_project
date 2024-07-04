@@ -9,6 +9,7 @@ colorama==0.4.6
 contourpy==1.1.1
 cycler==0.12.1
 dash==2.17.0
+dash-bootstrap-components==1.6.0
 dash-core-components==2.0.0
 dash-html-components==2.0.0
 dash-table==5.0.0
@@ -16,7 +17,9 @@ et-xmlfile==1.1.0
 fiona==1.9.6
 flask==3.0.3
 fonttools==4.51.0
+geographiclib==2.0
 geopandas==0.13.2
+geopy==2.4.1
 idna==3.7
 importlib-metadata==7.1.0
 importlib-resources==6.4.0
