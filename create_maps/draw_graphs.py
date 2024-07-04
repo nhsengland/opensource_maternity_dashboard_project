@@ -10,6 +10,25 @@ import json
 sys.path.append('./')
 import config
 
+def wrap_text(text, width):
+    words = text.split()
+    wrapped_lines = []
+    current_line = []
+
+    current_length = 0
+    for word in words:
+        if current_length + len(word) + (len(current_line) > 0) <= width:
+            current_line.append(word)
+            current_length += len(word) + (len(current_line) > 1)
+        else:
+            wrapped_lines.append(' '.join(current_line))
+            current_line = [word]
+            current_length = len(word)
+
+    if current_line:
+        wrapped_lines.append(' '.join(current_line))
+
+    return '<br>'.join(wrapped_lines)
 
 def draw_region_map(org_level, dimension, year, selectedpoints=None):
     # Get map data in the correct format
@@ -31,7 +50,7 @@ def draw_region_map(org_level, dimension, year, selectedpoints=None):
                                 width=600)
 
 
-    fig.update_layout(title_text=f'{config.measure_dict["NHS England (Region)"][dimension]["map_title"]} for {year}')
+    fig.update_layout(title_text=wrap_text(f'{config.measure_dict["NHS England (Region)"][dimension]["map_title"]} for {year}', 50))
     fig.update_layout(clickmode='event+select')
 
     fig.update_coloraxes(colorbar={'orientation':'h',
@@ -86,7 +105,7 @@ def draw_provider_map(org_level, dimension, year, selectedpoints=None):
             )
         )
 
-    fig.update_layout(title_text=f'{config.measure_dict["Provider"][dimension]["map_title"]} for {year}')
+    fig.update_layout(title_text=wrap_text(f'{config.measure_dict["Provider"][dimension]["map_title"]} for {year}', 50))
     fig.update_layout(clickmode='event+select')
 
     fig.update_coloraxes(colorbar={'orientation':'h',
@@ -104,6 +123,8 @@ def draw_special_bar_chart(dimension, year):
     # Create the bar chart
     # Should this be the rate (reflection of map) or the raw numbers
     fig = px.bar(df, x="Org_Name", y="Rate", title=f"{dimension}. Bar chart showing the rate of {dimension} per 1000 people for {year}")
+    fig.update_layout(xaxis_title='', yaxis_title='')
+   
     return fig
 
 
@@ -115,7 +136,7 @@ def draw_bar_chart(org_level, dimension, year, location):
     df_merged = process_data.merge_total_submitters(df_location, df_all_submitters)
 
     # Create the bar chart
-    fig = px.bar(df_merged, x="Measure", y="Value", title=f"{location}: {dimension} {year} - Bar chart of broken down data, with markers comparing to All Submitters.")
+    fig = px.bar(df_merged, x="Measure", y="Value", title=wrap_text(f"{location}: {dimension} {year} - Bar chart of broken down data, with markers comparing to All Submitters.", 50))
     
     # Add custom markers for All Submitters
     fig.add_trace(
@@ -132,10 +153,11 @@ def draw_bar_chart(org_level, dimension, year, location):
         )
     )
 
-    fig.update_layout(legend={"yanchor": "bottom",
+    fig.update_layout(legend={"yanchor": "middle",
                               "xanchor": "left",
-                              "y":1.01,
+                              "y":0.98,
                               "x":0})
+    fig.update_layout(xaxis_title='', yaxis_title='')
 
 
     return fig
@@ -161,7 +183,7 @@ def draw_time_series(org_level, dimension, location):
     
     # Create the time series line graph with custom hover text
     fig = px.line(df_location, x="year", y="Value", color=split_on, 
-                  title=f"{location}: {dimension} - Time Series",
+                  title=wrap_text(f"{location}: {dimension} - Time Series", 50),
                   hover_data={'hover_text': True})
     
     # Update hover data to use custom text
@@ -186,5 +208,7 @@ def draw_time_series(org_level, dimension, location):
                 showlegend=False 
             )
         )
+
+    fig.update_layout(xaxis_title='', yaxis_title='')
 
     return fig

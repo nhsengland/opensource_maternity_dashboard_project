@@ -1,5 +1,5 @@
 from dash import Dash, dcc, html, Input, Output, callback, ctx
-import process_data, draw_graphs
+import draw_graphs
 import plotly.express as px
 import sys
 import geopandas as gpd
@@ -61,31 +61,37 @@ CONTENT_STYLE = {
 
 sidebar = html.Div(
     [
-        html.H2("Sidebar", className="display-4"),
+        html.H4("Visualising: NHS England Maternity Dataset ", className="display-6"),
         html.Hr(),
         html.P(
-            "A simple sidebar layout", className="lead"
+            "Choose a level", className="lead"
         ),
         dcc.RadioItems(
         options=['NHS England (Region)', 'Provider'],
         value='NHS England (Region)',
         id = "org_level_button"
         ),
+        html.P(""),
+        html.Hr(),
         html.P("Pick a year to see the data", className="lead"),
         dcc.RadioItems(
         options=['2022-23', '2021-22'],
         value='2022-23',
         id = "year_button"
         ),
-
-        html.P("View the Bar chart or time series", className="lead"),
+        html.P(""),
+        html.Hr(),
+        html.P("View the breakdown using a bar chart or time series", className="lead"),
         dcc.RadioItems(
         options=['Bar Chart', 'Time Series'],
         value='Bar Chart',
         id = "chart_button"
         ),
+        html.P(""),
+        html.Hr(),
         html.P("Pick a measure to view", className="lead"),
-        dcc.Dropdown(list(config.measure_dict["NHS England (Region)"].keys()), dimension, id='dimension-dropdown'), #this might need updated for region/provider. 
+        dcc.Dropdown(list(config.measure_dict["NHS England (Region)"].keys()), dimension, id='dimension-dropdown'),
+        html.Hr(),
     ],
     style=SIDEBAR_STYLE,
 )
@@ -105,7 +111,7 @@ content = html.Div(
                     id='bar-chart',
                     figure=get_chart(org_level, dimension, year, chart_type, location="All Submitters"),
                     style={"height": "800px"}
-                ), width=5, style={"padding": "0"} 
+                ), width=4, style={"padding": "0"} 
             )
         ]
     ),
