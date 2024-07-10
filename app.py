@@ -5,6 +5,7 @@ import dash_bootstrap_components as dbc
 import json
 sys.path.append('./')
 import config
+import textwrap
 
 
 #if debug is true display all the debug info
@@ -38,6 +39,19 @@ def get_chart(org_level, dimension, year, chart_type, location):
         fig = draw_graphs.draw_time_series(org_level, dimension, location) 
     
     return fig
+
+def get_title(dimension, year, location, chart_type):
+    if chart_type == "Bar Chart":
+        if dimension in config.special_dimensions:
+            #special bar chart title
+            title=f"{dimension}. Bar chart showing the rate of {dimension} per 1000 people for {year}"
+        else:
+            title=textwrap.fill(f"{location}: {dimension} {year} - Bar chart of broken down data, with markers comparing to All Submitters.", width=50)
+    else:
+        title=textwrap.fill(f"{location}: {dimension} - Time Series", width=50)
+
+
+    return title
 
 
 # the style arguments for the sidebar. We use position:fixed and a fixed width
@@ -100,18 +114,20 @@ content = html.Div(
     [dbc.Row(
         [
             dbc.Col(
+                [html.H1("Regions: Percentage of Mothers OVER the age of 35 for 2022-23", id='map_title'),
                 dcc.Graph(
                     id='map',
                     figure=get_map(org_level, dimension, year),
-                    style={"height": "800px", 'width': '800px'}
-                ), width=5, style={"padding": "0"}
+                    style={"height": "800px"}
+                )], width=6
             ),
             dbc.Col(
+                [html.H2("All Submitters: AgeAtBookingMotherGroup 2022-23 - Bar chart of broken down data, with markers comparing to All Submitters", id='chart_title'),
                 dcc.Graph(
                     id='bar-chart',
                     figure=get_chart(org_level, dimension, year, chart_type, location="All Submitters"),
                     style={"height": "800px"}
-                ), width=4, style={"padding": "0"} 
+                )], width=6
             )
         ]
     ),
@@ -145,6 +161,7 @@ app.layout = html.Div([
 
 @callback(
     Output('bar-chart', 'figure'),
+    Output('chart_title', 'children'),
     Input('dimension-dropdown', 'value'),
     Input('map', 'selectedData'),
     Input('org_level_button', 'value'),
@@ -168,10 +185,8 @@ def display_chart(dimension, selectedData, org_level, year, chart_type):
             else: 
                 org_level = "National"
     if selectedData is None and org_level == "Provider" and dimension in config.special_dimensions and chart_type == "Time Series":
-        print("hi")
         org_level = "Provider"
     elif selectedData is not None and org_level == "Provider" and dimension in config.special_dimensions and chart_type == "Time Series":
-        print("hiiiii")
         org_level = "Provider"
         location = selectedData["points"][0]["text"].split('<br>')[0]
 
@@ -180,13 +195,15 @@ def display_chart(dimension, selectedData, org_level, year, chart_type):
     # before, i was getting callback errors because it couldn't find a location
     # is reverting to all submitters the best thing?
     fig = get_chart(org_level, dimension, year, chart_type, location)
-    return fig
+    title = get_title(dimension, year, location, chart_type)
+    return fig, title
 
 
 @callback(
     Output('map', 'figure'),
     Output('selectedData', 'children'),
     Output('selectedpoints', 'children'),
+    Output('map_title', 'children'),
     Input('dimension-dropdown', 'value'),
     Input('map', 'selectedData'),
     Input('org_level_button', 'value'),
@@ -199,8 +216,9 @@ def display_map(dimension, selectedData, org_level, year):
         selectedpoints = [point["pointIndex"] for point in selectedData["points"]]
 
     fig = get_map(org_level, dimension, year, selectedpoints=selectedpoints)
+    map_title = textwrap.fill(f'{config.measure_dict[org_level][dimension]["map_title"]} for {year}',width=50)
 
-    return fig, json.dumps(selectedData), json.dumps(selectedpoints)
+    return fig, json.dumps(selectedData), json.dumps(selectedpoints), map_title
 
 if __name__ == '__main__':
     app.run(debug=True)

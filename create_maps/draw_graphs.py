@@ -47,7 +47,6 @@ def draw_region_map(org_level, dimension, year, selectedpoints=None):
                                 )
 
 
-    fig.update_layout(title_text=wrap_text(f'{config.measure_dict["NHS England (Region)"][dimension]["map_title"]} for {year}', 50))
     fig.update_layout(clickmode='event+select')
 
     fig.update_coloraxes(colorbar={'orientation':'h',
@@ -97,12 +96,12 @@ def draw_provider_map(org_level, dimension, year, selectedpoints=None):
                     color = df[percent_col],
                     colorscale=nhs_colors                   
                 ),
-                text=df.apply(lambda row: f"{row['region_name']}<br>{row[percent_col]}{sign}", axis=1),
+                text=df.apply(lambda row: f"{row['region_name']}<br>{row[percent_col]:.2f}{sign}", axis=1),
                 hoverinfo='text'
+                #hovertemplate
             )
         )
 
-    fig.update_layout(title_text=wrap_text(f'{config.measure_dict["Provider"][dimension]["map_title"]} for {year}', 50))
     fig.update_layout(clickmode='event+select')
 
     fig.update_coloraxes(colorbar={'orientation':'h',
@@ -119,7 +118,7 @@ def draw_special_bar_chart(dimension, year):
     df = process_data.return_data_for_special_bar_chart(dimension, year)
     # Create the bar chart
     # Should this be the rate (reflection of map) or the raw numbers
-    fig = px.bar(df, x="Org_Name", y="Rate", title=f"{dimension}. Bar chart showing the rate of {dimension} per 1000 people for {year}")
+    fig = px.bar(df, x="Org_Name", y="Rate")
     fig.update_layout(xaxis_title='', yaxis_title='')
    
     return fig
@@ -133,7 +132,7 @@ def draw_bar_chart(org_level, dimension, year, location):
     df_merged = process_data.merge_total_submitters(df_location, df_all_submitters)
 
     # Create the bar chart
-    fig = px.bar(df_merged, x="Measure", y="Value", title=wrap_text(f"{location}: {dimension} {year} - Bar chart of broken down data, with markers comparing to All Submitters.", 50))
+    fig = px.bar(df_merged, x="Measure", y="Value")
     
     # Add custom markers for All Submitters
     fig.add_trace(
@@ -179,8 +178,7 @@ def draw_time_series(org_level, dimension, location):
         lambda row: f"Year: {row['year']}<br>{split_on}: {row[split_on]}<br>Value: {row['Value']}", axis=1)
     
     # Create the time series line graph with custom hover text
-    fig = px.line(df_location, x="year", y="Value", color=split_on, 
-                  title=wrap_text(f"{location}: {dimension} - Time Series", 50),
+    fig = px.line(df_location, x="year", y="Value", color=split_on,
                   hover_data={'hover_text': True})
     
     # Update hover data to use custom text
