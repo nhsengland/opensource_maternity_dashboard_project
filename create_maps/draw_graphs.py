@@ -7,26 +7,6 @@ import plotly.graph_objects as go
 sys.path.append('./')
 import config
 
-def wrap_text(text, width):
-    words = text.split()
-    wrapped_lines = []
-    current_line = []
-
-    current_length = 0
-    for word in words:
-        if current_length + len(word) + (len(current_line) > 0) <= width:
-            current_line.append(word)
-            current_length += len(word) + (len(current_line) > 1)
-        else:
-            wrapped_lines.append(' '.join(current_line))
-            current_line = [word]
-            current_length = len(word)
-
-    if current_line:
-        wrapped_lines.append(' '.join(current_line))
-
-    return '<br>'.join(wrapped_lines)
-
 def draw_region_map(org_level, dimension, year, selectedpoints=None):
     # Get map data in the correct format
     df = process_data.return_data_for_map(dimension, org_level, config.measure_dict, year)
@@ -43,10 +23,27 @@ def draw_region_map(org_level, dimension, year, selectedpoints=None):
                                 color_continuous_scale=nhs_colors,
                                 mapbox_style="carto-positron",
                                 center={"lat": 53, "lon": -2},
-                                zoom=5.2
+                                zoom=5.2,
+                                custom_data=['region_name', config.measure_dict["NHS England (Region)"][dimension]["rate_col"]]
                                 )
+    
+    if dimension in config.special_dimensions:
+        hover_template = (
+            '%{customdata[0]}<br>'
+            '%{customdata[1]:.2f}<extra></extra>'
+        )
+    else:
+        hover_template = (
+            '%{customdata[0]}<br>'
+            '%{customdata[1]:.2f}%<extra></extra>'
+        )
+        
+
+    fig.update_traces(hovertemplate=hover_template)
 
 
+
+    
     fig.update_layout(clickmode='event+select')
 
     fig.update_coloraxes(colorbar={'orientation':'h',
@@ -75,44 +72,35 @@ def draw_provider_map(org_level, dimension, year, selectedpoints=None):
                                 mapbox_style="carto-positron",
                                 center={"lat": 53, "lon": -2},
                                 zoom=5.5)
+    
+    percent_col = config.measure_dict["Provider"][dimension]["rate_col"]
+    sign = "%" if percent_col == "Percent" else ""
 
-
-    if org_level == "Provider":
-        #think the if here is redundant
-        df = process_data.return_data_for_map(dimension, "Provider", config.measure_dict, year)
-        percent_col = config.measure_dict["Provider"][dimension]["rate_col"]
-        if percent_col == "Percent":
-            sign = "%"
-        else:
-            sign = ""
-
-        fig.add_trace(
-            go.Scattermapbox(
-                lat=df['latitude'],
-                lon=df['longitude'],
-                mode='markers',
-                marker=go.scattermapbox.Marker(
-                    size=20,
-                    color = df[percent_col],
-                    colorscale=nhs_colors                   
-                ),
-                text=df.apply(lambda row: f"{row['region_name']}<br>{row[percent_col]:.2f}{sign}", axis=1),
-                hoverinfo='text'
-                #hovertemplate
-            )
+    fig.add_trace(
+        go.Scattermapbox(
+            lat=df['latitude'],
+            lon=df['longitude'],
+            mode='markers',
+            marker=go.scattermapbox.Marker(
+                size=20,
+                color=df[percent_col],
+                colorscale=nhs_colors,
+                colorbar=dict(title='', orientation='h', y=-0.1)
+            ),
+            customdata=df[['region_name', percent_col]],
+            hovertemplate='%{customdata[0]}<br>%{customdata[1]:.2f}' + sign + '<extra></extra>'
         )
+    )
 
     fig.update_layout(clickmode='event+select')
 
-    fig.update_coloraxes(colorbar={'orientation':'h',
-                                   'title': ""})
+    fig.update_coloraxes(colorbar={'orientation':'h', 'title': ""})
     fig.update_layout(coloraxis_colorbar_y=-0.1)
+
     if selectedpoints is not None:
-        # update color here 
         fig.update_traces(selectedpoints=selectedpoints)
         
     return fig
-
 
 def draw_special_bar_chart(dimension, year):
     df = process_data.return_data_for_special_bar_chart(dimension, year)
@@ -125,6 +113,8 @@ def draw_special_bar_chart(dimension, year):
 
 
 def draw_bar_chart(org_level, dimension, year, location):
+    print("drawing bar chart")
+    print(dimension, org_level, location, year)
     df_location = process_data.return_data_for_bar_chart(dimension, org_level, location, year)
     df_all_submitters = process_data.return_data_for_bar_chart(dimension, "National", "All Submitters", year)
 

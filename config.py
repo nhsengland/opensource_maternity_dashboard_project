@@ -2,7 +2,7 @@ measure_dict = { #add an extra level to it for region/provider then add extra sq
     "NHS England (Region)": {"AgeAtBookingMotherGroup": {
         "numerator": ["35 to 39", "40 to 44", "45 or Over"],
         "denominator": ["Under 20", "20 to 24", "25 to 29", "30 to 34", "35 to 39", "40 to 44", "45 or Over"],
-        "map_title": "Regions: Percentage of Mothers OVER the age of 35",
+        "map_title": "Percentage of Mothers OVER the age of 35",
         "rate_col": "Percent"
     },
     "ApgarScore5TermGroup7": {

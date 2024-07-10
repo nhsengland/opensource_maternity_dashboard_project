@@ -40,18 +40,29 @@ def get_chart(org_level, dimension, year, chart_type, location):
     
     return fig
 
-def get_title(dimension, year, location, chart_type):
+def get_chart_title(dimension, year, location, chart_type):
+    description = None
     if chart_type == "Bar Chart":
         if dimension in config.special_dimensions:
-            #special bar chart title
             title=f"{dimension}. Bar chart showing the rate of {dimension} per 1000 people for {year}"
         else:
-            title=textwrap.fill(f"{location}: {dimension} {year} - Bar chart of broken down data, with markers comparing to All Submitters.", width=50)
+            title=textwrap.fill(f"{location}: {dimension} {year}", width=50)
+            description = "Bar chart of broken down data, with markers comparing to All Submitters"
     else:
-        title=textwrap.fill(f"{location}: {dimension} - Time Series", width=50)
+        title=textwrap.fill(f"{location}: {dimension}", width=50)
+        description = "Time series of broken down data"
 
 
-    return title
+    return title, description
+
+def get_map_title(dimension, year, org_level):
+    title = textwrap.fill(f'{config.measure_dict[org_level][dimension]["map_title"]} for {year}',width=50)
+    if org_level == "NHS England (Region)" or org_level == "National":
+        description = "Chloropleth map of England, broken in seven regions"
+    elif org_level == "Provider":
+        description = "Scatter plot map of England, with each point representing a maternity care provider"
+
+    return title, description
 
 
 # the style arguments for the sidebar. We use position:fixed and a fixed width
@@ -114,7 +125,8 @@ content = html.Div(
     [dbc.Row(
         [
             dbc.Col(
-                [html.H1("Regions: Percentage of Mothers OVER the age of 35 for 2022-23", id='map_title'),
+                [html.H2("Percentage of Mothers OVER the age of 35 for 2022-23", id='map_title'),
+                html.H4("Chloropleth map of England, broken in seven regions", id='map_description'), # move these to have different rowsand cols
                 dcc.Graph(
                     id='map',
                     figure=get_map(org_level, dimension, year),
@@ -122,7 +134,8 @@ content = html.Div(
                 )], width=6
             ),
             dbc.Col(
-                [html.H2("All Submitters: AgeAtBookingMotherGroup 2022-23 - Bar chart of broken down data, with markers comparing to All Submitters", id='chart_title'),
+                [html.H2("All Submitters: AgeAtBookingMotherGroup 2022-23", id='chart_title'),
+                html.H4("Bar chart of broken down data, with markers comparing to All Submitters", id='chart_description'),
                 dcc.Graph(
                     id='bar-chart',
                     figure=get_chart(org_level, dimension, year, chart_type, location="All Submitters"),
@@ -132,11 +145,11 @@ content = html.Div(
         ]
     ),
             html.Div([
-            html.Pre(id='selectedData')
+            html.Pre(id='selectedDataDisplay')
         ]),   
 
     html.Div([
-            html.Pre(id='selectedpoints')
+            html.Pre(id='selectedpointsdisplay')
         ]),   
     ],
     style=CONTENT_STYLE
@@ -162,6 +175,7 @@ app.layout = html.Div([
 @callback(
     Output('bar-chart', 'figure'),
     Output('chart_title', 'children'),
+    Output('chart_description', 'children'),
     Input('dimension-dropdown', 'value'),
     Input('map', 'selectedData'),
     Input('org_level_button', 'value'),
@@ -169,7 +183,6 @@ app.layout = html.Div([
     Input('chart_button', 'value'))
 def display_chart(dimension, selectedData, org_level, year, chart_type):
     location = "All Submitters"
-
     if selectedData is None and not(org_level == "Provider" and dimension in config.special_dimensions and chart_type == "Time Series"):
         org_level = "National"
     else:
@@ -180,30 +193,33 @@ def display_chart(dimension, selectedData, org_level, year, chart_type):
                 org_level = "National"
 
         elif org_level == "Provider" and not(selectedData == None):
-            if "text" in selectedData["points"][0]:
-                location = selectedData["points"][0]["text"].split('<br>')[0]
+            print("heloo")
+            if "customdata" in selectedData["points"][0]:
+                location = selectedData["points"][0]["customdata"][0]
+                print("location:", location)
             else: 
                 org_level = "National"
     if selectedData is None and org_level == "Provider" and dimension in config.special_dimensions and chart_type == "Time Series":
         org_level = "Provider"
     elif selectedData is not None and org_level == "Provider" and dimension in config.special_dimensions and chart_type == "Time Series":
         org_level = "Provider"
-        location = selectedData["points"][0]["text"].split('<br>')[0]
+        location =  selectedData["points"][0]["customdata"][0]
 
-
-    # I have fixed this so it will now revert to a bar chart of all submitters when flicking between org levels
-    # before, i was getting callback errors because it couldn't find a location
-    # is reverting to all submitters the best thing?
+    if ctx.triggered_id == "org_level_button":
+        print("button pushed")
+        location = "All Submitters"
+        org_level = "National"
     fig = get_chart(org_level, dimension, year, chart_type, location)
-    title = get_title(dimension, year, location, chart_type)
-    return fig, title
+    title, description = get_chart_title(dimension, year, location, chart_type)
+    return fig, title, description
 
 
 @callback(
     Output('map', 'figure'),
-    Output('selectedData', 'children'),
-    Output('selectedpoints', 'children'),
     Output('map_title', 'children'),
+    Output('map_description', 'children'),
+    Output('selectedDataDisplay', 'children'),
+    Output('selectedpointsdisplay', 'children'),
     Input('dimension-dropdown', 'value'),
     Input('map', 'selectedData'),
     Input('org_level_button', 'value'),
@@ -216,9 +232,9 @@ def display_map(dimension, selectedData, org_level, year):
         selectedpoints = [point["pointIndex"] for point in selectedData["points"]]
 
     fig = get_map(org_level, dimension, year, selectedpoints=selectedpoints)
-    map_title = textwrap.fill(f'{config.measure_dict[org_level][dimension]["map_title"]} for {year}',width=50)
+    map_title, map_description = get_map_title(dimension, year, org_level)
 
-    return fig, json.dumps(selectedData), json.dumps(selectedpoints), map_title
+    return fig, map_title, map_description, json.dumps(selectedData), json.dumps(selectedpoints)
 
 if __name__ == '__main__':
     app.run(debug=True)
