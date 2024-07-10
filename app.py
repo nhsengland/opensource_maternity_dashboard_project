@@ -144,13 +144,13 @@ content = html.Div(
             )
         ]
     ),
-            html.Div([
-            html.Pre(id='selectedDataDisplay')
-        ]),   
+    #         html.Div([
+    #         html.Pre(id='selectedDataDisplay')
+    #     ]),   
 
-    html.Div([
-            html.Pre(id='selectedpointsdisplay')
-        ]),   
+    # html.Div([
+    #         html.Pre(id='selectedpointsdisplay')
+    #     ]),   
     ],
     style=CONTENT_STYLE
 )
@@ -162,14 +162,6 @@ app.layout = html.Div([
         dbc.Col(content, width=11, style={"padding": "0"})
     ]),
 ])
-
-
-# @callback(
-#     Output('click-data', 'children'),
-#     Input('map', 'selectedData'))
-# def display_click_data(clickData):
-#     return json.dumps(clickData, indent=2)
-
 
 
 @callback(
@@ -218,8 +210,8 @@ def display_chart(dimension, selectedData, org_level, year, chart_type):
     Output('map', 'figure'),
     Output('map_title', 'children'),
     Output('map_description', 'children'),
-    Output('selectedDataDisplay', 'children'),
-    Output('selectedpointsdisplay', 'children'),
+    #Output('selectedDataDisplay', 'children'),
+    #Output('selectedpointsdisplay', 'children'),
     Input('dimension-dropdown', 'value'),
     Input('map', 'selectedData'),
     Input('org_level_button', 'value'),
@@ -234,7 +226,7 @@ def display_map(dimension, selectedData, org_level, year):
     fig = get_map(org_level, dimension, year, selectedpoints=selectedpoints)
     map_title, map_description = get_map_title(dimension, year, org_level)
 
-    return fig, map_title, map_description, json.dumps(selectedData), json.dumps(selectedpoints)
+    return fig, map_title, map_description#, json.dumps(selectedData), json.dumps(selectedpoints)
 
 if __name__ == '__main__':
     app.run(debug=True)
