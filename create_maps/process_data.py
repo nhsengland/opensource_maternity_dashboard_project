@@ -49,16 +49,10 @@ def filter_for_measure_and_level(df, dimension, org_level):
     pandas.DataFrame: Filtered DataFrame containing only rows that match the specified dimension and organisation level.
 
     """
-    # TODO: Implement error handling for invalid dimension or org_level values
-
     # Filter the DataFrame to only include rows with the specified organisation level and dimension
-
     df_filtered = df[df["Org_Level"] == org_level]
 
-
     df_filtered = df_filtered[df_filtered["Dimension"] == dimension]
-
-
 
     return df_filtered
 
