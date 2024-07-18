@@ -18,13 +18,13 @@ def draw_region_map(org_level, dimension, year, selectedpoints=None):
 
     fig = px.choropleth_mapbox(df, 
                                 geojson=geo_df, 
-                                locations="region_name", 
+                                locations="Org_Name", 
                                 color=config.measure_dict["NHS England (Region)"][dimension]["rate_col"],
                                 color_continuous_scale=nhs_colors,
                                 mapbox_style="carto-positron",
                                 center={"lat": 53, "lon": -2},
                                 zoom=5.2,
-                                custom_data=['region_name', config.measure_dict["NHS England (Region)"][dimension]["rate_col"]]
+                                custom_data=['Org_Name', config.measure_dict["NHS England (Region)"][dimension]["rate_col"]]
                                 )
     
     if dimension in config.special_dimensions:
@@ -66,7 +66,7 @@ def draw_provider_map(org_level, dimension, year, selectedpoints=None):
 
     fig = px.choropleth_mapbox(df, 
                                 geojson=geo_df, 
-                                locations="region_name", 
+                                locations="Org_Name", 
                                 color=config.measure_dict["Provider"][dimension]["rate_col"],
                                 color_continuous_scale=nhs_colors,
                                 mapbox_style="carto-positron",
@@ -87,7 +87,7 @@ def draw_provider_map(org_level, dimension, year, selectedpoints=None):
                 colorscale=nhs_colors,
                 colorbar=dict(title='', orientation='h', y=-0.1)
             ),
-            customdata=df[['region_name', percent_col]],
+            customdata=df[['Org_Name', percent_col]],
             hovertemplate='%{customdata[0]}<br>%{customdata[1]:.2f}' + sign + '<extra></extra>'
         )
     )
@@ -113,8 +113,6 @@ def draw_special_bar_chart(dimension, year):
 
 
 def draw_bar_chart(org_level, dimension, year, location):
-    print("drawing bar chart")
-    print(dimension, org_level, location, year)
     df_location = process_data.return_data_for_bar_chart(dimension, org_level, location, year)
     df_all_submitters = process_data.return_data_for_bar_chart(dimension, "National", "All Submitters", year)
 

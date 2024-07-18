@@ -3,7 +3,6 @@ import sys
 sys.path.append('./')
 import config
 
-
 def map_org_name(df):
     """
     Maps the organisational names in the 'Org_Name' column of the Maternity DataFrame
@@ -13,7 +12,7 @@ def map_org_name(df):
     df (pandas.DataFrame): DataFrame containing the 'Org_Name' column with organisational names.
 
     Returns:
-    pandas.DataFrame: DataFrame with an additional 'region_name' column where the organisational 
+    pandas.DataFrame: DataFrame with an additional 'Org_Name' column where the organisational 
                       names have been mapped to region names.
     """
     # Dictionary to map organisational names to region names
@@ -28,11 +27,49 @@ def map_org_name(df):
         'ALL SUBMITTERS': 'All Submitters'
     }
 
-    # Create the 'region_name' column by replacing the 'Org_Name' values based on the mapping dictionary
-    df['region_name'] = df['Org_Name'].replace(name_dict, regex=True)
+    # Create the 'Org_Name' column by replacing the 'Org_Name' values based on the mapping dictionary
+    df['Org_Name'] = df['Org_Name'].replace(name_dict, regex=True)
 
     return df
 
+def make_values_consistant(df):
+    """
+    Across different years of data sometimes there's inconsistencies with capitals
+    This function makessure all years are consistent
+    """
+    dimension_replace_dict = {
+        "SmokingAtBooking": "SmokingStatusGroupBooking",
+        "MethodOfDelivery": "DeliveryMethodBabyGroup",
+        "FolicAcidStatusGroupBooking": "FolicAcidSupplement",
+    }
+    df["Dimension"] = df["Dimension"].replace(dimension_replace_dict)
+
+    measure_replace_dict = {
+        "Missing Value / Value outside reporting parameters": "Missing value",
+        "Missing Value/Value outside reporting parameters": "Missing value",
+        "Missing value / Value outside reporting parameters": "Missing value",
+    }
+    df["Measure"] = df["Measure"].replace(measure_replace_dict)
+
+
+    # Dictionary for replacements
+    measure_replace_dict = {
+        "2": "02",
+        "3": "03",
+        "4": "04",
+        "5": "05",
+        "6": "06",
+        "7": "07",
+        "8": "08",
+        "9": "09",
+    }
+    # Filter DataFrame where 'Category' is 'Deprivation'
+    condition = df['Dimension'] == 'DeprivationDecileAtBooking'
+    # Apply replacements only to the filtered rows
+    df.loc[condition, 'Measure'] = df.loc[condition, 'Measure'].replace(measure_replace_dict)
+
+    return df
+    
 
 
 def filter_for_measure_and_level(df, dimension, org_level):
@@ -73,10 +110,10 @@ def get_rates(df, dimension, measure_dict, org_level):
     """
 
 
-    # Pivot the DataFrame to have 'Measure' values as columns and 'region_name' as the index
-    df_pivoted = df.pivot(columns="Measure", values="Value", index="region_name")
+    # Pivot the DataFrame to have 'Measure' values as columns and 'Org_Name' as the index
+    df_pivoted = df.pivot(columns="Measure", values="Value", index="Org_Name")
     
-    # Reset the index to convert 'region_name' from index to a column
+    # Reset the index to convert 'Org_Name' from index to a column
     df_pivoted = df_pivoted.reset_index()
 
     
@@ -97,7 +134,7 @@ def join_pop_data(df):
 
     Parameters:
     df (pandas.DataFrame): DataFrame containing the data to be joined with the population data.
-                           It must have a 'region_name' column.
+                           It must have a 'Org_Name' column.
 
     Returns:
     pandas.DataFrame: DataFrame resulting from the merge of the population data and the provided DataFrame,
@@ -110,7 +147,7 @@ def join_pop_data(df):
 
     # Aggregate the population data by region name and code, summing the total population and merge together
     df_pop_agg = df_pop.groupby(['NSHER 2023 Name', 'NHSER 2023 Code'])['Total'].sum().reset_index()
-    joined_df = df.merge(df_pop_agg, left_on="region_name", right_on="NSHER 2023 Name", how="left")
+    joined_df = df.merge(df_pop_agg, left_on="Org_Name", right_on="NSHER 2023 Name", how="left")
 
     # Calculate the rate using the ONS population estimates as the denominator
     joined_df["Rate"] = joined_df['Value'] / joined_df['Total']
@@ -144,6 +181,7 @@ def return_data_for_map(dimension, org_level, measure_dict, year):
     # Read the initial dataset from the CSV file, map names and filter
     df = pd.read_csv(config.data_source[year])
     df = map_org_name(df)
+    df = make_values_consistant(df)
     df = join_lat_lon_data(df)
 
     df = filter_for_measure_and_level(df, dimension, org_level)
@@ -159,21 +197,22 @@ def return_data_for_map(dimension, org_level, measure_dict, year):
         #merge the lat and lon back in
     
     
-    df = df_rates.merge(df[['region_name', 'latitude', 'longitude']].drop_duplicates(), on='region_name', how='left', suffixes=('', '_'))
+    df = df_rates.merge(df[['Org_Name', 'latitude', 'longitude']].drop_duplicates(), on='Org_Name', how='left', suffixes=('', '_'))
     #Enforce region order
-    df = df.sort_values("region_name", key=lambda col:col.map(config.region_order), ignore_index=True)
+    df = df.sort_values("Org_Name", key=lambda col:col.map(config.region_order), ignore_index=True)
     if org_level == "Provider":
         # I think the providers have changed so sorting doesn't make the numbers consistant
         # How could I do it without having a 200 line dictionary assigning values...
-        df = df.sort_values("region_name")
+        df = df.sort_values("Org_Name")
     return df
 
 def return_data_for_bar_chart(dimension, org_level, location, year):
     # Read the initial dataset from the CSV file, map names and filter     
     df = pd.read_csv(config.data_source[year])
     df = map_org_name(df)
+    df = make_values_consistant(df)
     df = filter_for_measure_and_level(df, dimension, org_level)
-    df = df[df["region_name"] == location]
+    df = df[df["Org_Name"] == location]
     return df
 
 def return_data_for_special_bar_chart(dimension, year):
@@ -182,6 +221,7 @@ def return_data_for_special_bar_chart(dimension, year):
 
     df = pd.read_csv(config.data_source[year])
     df = map_org_name(df)
+    df = make_values_consistant(df)
     df = filter_for_measure_and_level(df, dimension, "NHS England (Region)")
     df = join_pop_data(df)
     df["Rate"] = df["Rate"] * 1000
@@ -233,6 +273,7 @@ def return_data_for_time_series(dimension, org_level, location):
     
     # Map organization names
     combined_df = map_org_name(combined_df)
+    combined_df = make_values_consistant(combined_df)
 
     if dimension in config.special_dimensions and org_level == "National":
         #This means the time series will start off showing the regions for the special dims
@@ -243,7 +284,7 @@ def return_data_for_time_series(dimension, org_level, location):
     
     # Filter for the specified location
     if dimension not in config.special_dimensions:
-        combined_df = combined_df[combined_df["region_name"] == location]
+        combined_df = combined_df[combined_df["Org_Name"] == location]
 
     
     return combined_df

@@ -100,7 +100,7 @@ sidebar = html.Div(
         html.Hr(),
         html.P("Pick a year to see the data", className="lead"),
         dcc.RadioItems(
-        options=['2022-23', '2021-22'],
+        options=['2022-23', '2021-22', '2020-21'],
         value='2022-23',
         id = "year_button"
         ),
@@ -185,10 +185,8 @@ def display_chart(dimension, selectedData, org_level, year, chart_type):
                 org_level = "National"
 
         elif org_level == "Provider" and not(selectedData == None):
-            print("heloo")
             if "customdata" in selectedData["points"][0]:
                 location = selectedData["points"][0]["customdata"][0]
-                print("location:", location)
             else: 
                 org_level = "National"
     if selectedData is None and org_level == "Provider" and dimension in config.special_dimensions and chart_type == "Time Series":
@@ -198,7 +196,6 @@ def display_chart(dimension, selectedData, org_level, year, chart_type):
         location =  selectedData["points"][0]["customdata"][0]
 
     if ctx.triggered_id == "org_level_button":
-        print("button pushed")
         location = "All Submitters"
         org_level = "National"
     fig = get_chart(org_level, dimension, year, chart_type, location)
