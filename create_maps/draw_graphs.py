@@ -7,13 +7,20 @@ import plotly.graph_objects as go
 sys.path.append('./')
 import config
 
+def get_geo_data():
+
+    geo_df = gpd.read_file("data/NHS_England_Regions_April_2021_EN_BUC_2022.geojson")
+    geo_df = geo_df.to_crs(epsg='4326')
+    geo_df = geo_df[["NHSER21NM", "geometry"]].set_index("NHSER21NM")
+
+    return geo_df
+
+
 def draw_region_map(org_level, dimension, year, selectedpoints=None):
     # Get map data in the correct format
     df = process_data.return_data_for_map(dimension, org_level, config.measure_dict, year)
     
-    geo_df = gpd.read_file("data/NHS_England_Regions_April_2021_EN_BUC_2022.geojson")
-    geo_df = geo_df.to_crs(epsg='4326')
-    geo_df = geo_df[["NHSER21NM", "geometry"]].set_index("NHSER21NM")
+    geo_df = get_geo_data()
     nhs_colors = ['#B4D0FF', '#699EFF', '#1E6EFF', '#003087', '#001843']
 
     fig = px.choropleth_mapbox(df, 
@@ -54,9 +61,8 @@ def draw_provider_map(org_level, dimension, year, selectedpoints=None):
     # Get map data in the correct format
     df = process_data.return_data_for_map(dimension, org_level, config.measure_dict, year)
     
-    geo_df = gpd.read_file("data/NHS_England_Regions_April_2021_EN_BUC_2022.geojson")
-    geo_df = geo_df.to_crs(epsg='4326')
-    geo_df = geo_df[["NHSER21NM", "geometry"]].set_index("NHSER21NM")
+    geo_df = get_geo_data()
+    
     nhs_colors = ['#B4D0FF', '#699EFF', '#1E6EFF', '#003087', '#001843']
 
     fig = px.choropleth_mapbox(df, 
@@ -97,7 +103,7 @@ def draw_provider_map(org_level, dimension, year, selectedpoints=None):
     return fig
 
 def draw_special_bar_chart(dimension, year):
-    
+
     df = process_data.return_data_for_special_bar_chart(dimension, year)
     fig = px.bar(df, x="Org_Name", y="Rate")
     fig.update_layout(xaxis_title='', yaxis_title='')
