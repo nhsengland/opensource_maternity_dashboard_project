@@ -14,18 +14,14 @@ import textwrap
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
 
-
+# Set defaults
 org_level =  "NHS England (Region)"
 dimension = "AgeAtBookingMotherGroup"
 year = "2022-23"
 chart_type = "Bar Chart"
 
-
 def get_map(org_level, dimension, year, selectedpoints=None):
-    if org_level == "NHS England (Region)":
-        fig = draw_graphs.draw_region_map(org_level, dimension, year, selectedpoints)
-    if org_level == "Provider":
-        fig = draw_graphs.draw_provider_map(org_level, dimension, year, selectedpoints)
+    fig = draw_graphs.draw_map(org_level, dimension, year, selectedpoints)
     return fig
 
 def get_chart(org_level, dimension, year, chart_type, location):
@@ -35,7 +31,6 @@ def get_chart(org_level, dimension, year, chart_type, location):
         else:
             fig = draw_graphs.draw_bar_chart(org_level, dimension, year, location)
     else:
-
         fig = draw_graphs.draw_time_series(org_level, dimension, location) 
     
     return fig
@@ -51,7 +46,6 @@ def get_chart_title(dimension, year, location, chart_type):
     else:
         title=textwrap.fill(f"{location}: {dimension}", width=50)
         description = "Time series of broken down data"
-
 
     return title, description
 
@@ -198,6 +192,7 @@ def display_chart(dimension, selectedData, org_level, year, chart_type):
     if ctx.triggered_id == "org_level_button":
         location = "All Submitters"
         org_level = "National"
+        
     fig = get_chart(org_level, dimension, year, chart_type, location)
     title, description = get_chart_title(dimension, year, location, chart_type)
     return fig, title, description

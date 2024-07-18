@@ -261,3 +261,6 @@ data_source = {"2022-23": "data/hosp-epis-stat-mat-msdscsv-2022-23.csv",
 
 # These are the dimensions that need extra considerations, due to them only havign a single measure
 special_dimensions = ["TotalBabies", "TotalDeliveries"]
+
+# This is the NHS colours
+nhs_colours = ['#B4D0FF', '#699EFF', '#1E6EFF', '#003087', '#001843']

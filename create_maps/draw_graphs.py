@@ -15,41 +15,34 @@ def get_geo_data():
 
     return geo_df
 
+def set_up_map(df, geo_df, org_level, dimension, selectedpoints):
 
-def draw_region_map(org_level, dimension, year, selectedpoints=None):
-    # Get map data in the correct format
-    df = process_data.return_data_for_map(dimension, org_level, config.measure_dict, year)
-    
-    geo_df = get_geo_data()
-    nhs_colors = ['#B4D0FF', '#699EFF', '#1E6EFF', '#003087', '#001843']
+    fig = px.choropleth_mapbox(
+        df, 
+        geojson=geo_df, 
+        locations="Org_Name", 
+        color=config.measure_dict[org_level][dimension]["rate_col"], 
+        color_continuous_scale=config.nhs_colours,
+        mapbox_style="carto-positron",
+        center={"lat": 53, "lon": -2},
+        zoom=5.2
+    )
 
-    fig = px.choropleth_mapbox(df, 
-                                geojson=geo_df, 
-                                locations="Org_Name", 
-                                color=config.measure_dict["NHS England (Region)"][dimension]["rate_col"],
-                                color_continuous_scale=nhs_colors,
-                                mapbox_style="carto-positron",
-                                center={"lat": 53, "lon": -2},
-                                zoom=5.2,
-                                custom_data=['Org_Name', config.measure_dict["NHS England (Region)"][dimension]["rate_col"]]
-                                )
-    
-    if dimension in config.special_dimensions:
-        hover_template = (
+    if org_level == "Provider":
+        fig = add_scatter_points(fig, df, org_level, dimension)
+
+    fig.update_traces(
+        customdata=df[['Org_Name', config.measure_dict[org_level][dimension]["rate_col"]]].values,
+        hovertemplate=(
             '%{customdata[0]}<br>'
-            '%{customdata[1]:.2f}<extra></extra>'
+            '%{customdata[1]:.2f}' + 
+            ('%' if dimension not in config.special_dimensions else '') +
+            '<extra></extra>'
         )
-    else:
-        hover_template = (
-            '%{customdata[0]}<br>'
-            '%{customdata[1]:.2f}%<extra></extra>'
-        )
-        
+    )
 
-    fig.update_traces(hovertemplate=hover_template)
     fig.update_layout(clickmode='event+select')
-    fig.update_coloraxes(colorbar={'orientation':'h',
-                                   'title': ""})
+    fig.update_coloraxes(colorbar={'orientation': 'h', 'title': ""})
     fig.update_layout(coloraxis_colorbar_y=-0.1)
 
     if selectedpoints is not None:
@@ -57,49 +50,30 @@ def draw_region_map(org_level, dimension, year, selectedpoints=None):
 
     return fig
 
-def draw_provider_map(org_level, dimension, year, selectedpoints=None):
-    # Get map data in the correct format
-    df = process_data.return_data_for_map(dimension, org_level, config.measure_dict, year)
-    
-    geo_df = get_geo_data()
-    
-    nhs_colors = ['#B4D0FF', '#699EFF', '#1E6EFF', '#003087', '#001843']
-
-    fig = px.choropleth_mapbox(df, 
-                                geojson=geo_df, 
-                                locations="Org_Name", 
-                                color=config.measure_dict["Provider"][dimension]["rate_col"],
-                                color_continuous_scale=nhs_colors,
-                                mapbox_style="carto-positron",
-                                center={"lat": 53, "lon": -2},
-                                zoom=5.5)
-    
-    percent_col = config.measure_dict["Provider"][dimension]["rate_col"]
-    sign = "%" if percent_col == "Percent" else ""
-
+def add_scatter_points(fig, df, org_level, dimension):
+    # For provider level, adds the scatter points
     fig.add_trace(
-        go.Scattermapbox(
-            lat=df['latitude'],
-            lon=df['longitude'],
-            mode='markers',
-            marker=go.scattermapbox.Marker(
-                size=20,
-                color=df[percent_col],
-                colorscale=nhs_colors,
-                colorbar=dict(title='', orientation='h', y=-0.1)
-            ),
-            customdata=df[['Org_Name', percent_col]],
-            hovertemplate='%{customdata[0]}<br>%{customdata[1]:.2f}' + sign + '<extra></extra>'
+            go.Scattermapbox(
+                lat=df['latitude'],
+                lon=df['longitude'],
+                mode='markers',
+                marker=go.scattermapbox.Marker(
+                    size=20,
+                    color=df[config.measure_dict[org_level][dimension]["rate_col"]],
+                    colorscale=config.nhs_colours,
+                    colorbar=dict(title='', orientation='h', y=-0.1)
+                )
+            )
         )
-    )
+    return fig
 
-    fig.update_layout(clickmode='event+select')
-    fig.update_coloraxes(colorbar={'orientation':'h', 'title': ""})
-    fig.update_layout(coloraxis_colorbar_y=-0.1)
 
-    if selectedpoints is not None:
-        fig.update_traces(selectedpoints=selectedpoints)
-        
+
+def draw_map(org_level, dimension, year, selectedpoints=None):
+    df = process_data.return_data_for_map(dimension, org_level, config.measure_dict, year)
+    geo_df = get_geo_data() 
+    fig = set_up_map(df, geo_df, org_level, dimension, selectedpoints)
+      
     return fig
 
 def draw_special_bar_chart(dimension, year):
