@@ -40,12 +40,7 @@ def draw_region_map(org_level, dimension, year, selectedpoints=None):
         
 
     fig.update_traces(hovertemplate=hover_template)
-
-
-
-    
     fig.update_layout(clickmode='event+select')
-
     fig.update_coloraxes(colorbar={'orientation':'h',
                                    'title': ""})
     fig.update_layout(coloraxis_colorbar_y=-0.1)
@@ -93,7 +88,6 @@ def draw_provider_map(org_level, dimension, year, selectedpoints=None):
     )
 
     fig.update_layout(clickmode='event+select')
-
     fig.update_coloraxes(colorbar={'orientation':'h', 'title': ""})
     fig.update_layout(coloraxis_colorbar_y=-0.1)
 
@@ -103,9 +97,8 @@ def draw_provider_map(org_level, dimension, year, selectedpoints=None):
     return fig
 
 def draw_special_bar_chart(dimension, year):
+    
     df = process_data.return_data_for_special_bar_chart(dimension, year)
-    # Create the bar chart
-    # Should this be the rate (reflection of map) or the raw numbers
     fig = px.bar(df, x="Org_Name", y="Rate")
     fig.update_layout(xaxis_title='', yaxis_title='')
    

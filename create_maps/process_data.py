@@ -27,7 +27,7 @@ def map_org_name(df):
         'ALL SUBMITTERS': 'All Submitters'
     }
 
-    # Create the 'Org_Name' column by replacing the 'Org_Name' values based on the mapping dictionary
+    # Replace the names
     df['Org_Name'] = df['Org_Name'].replace(name_dict, regex=True)
 
     return df
@@ -36,7 +36,14 @@ def make_values_consistant(df):
     """
     Across different years of data sometimes there's inconsistencies with capitals
     This function makessure all years are consistent
+
+    Parameters:
+    df (pandas.DataFrame): DataFrame to be made consistant
+
+    Returns:
+    pandas.DataFrame: DataFrame with changes made (if any)
     """
+    
     dimension_replace_dict = {
         "SmokingAtBooking": "SmokingStatusGroupBooking",
         "MethodOfDelivery": "DeliveryMethodBabyGroup",

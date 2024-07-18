@@ -1,4 +1,6 @@
-measure_dict = { #add an extra level to it for region/provider then add extra square bracket
+# Dictionary of all measures, and details for the drawing of the map for each of them
+
+measure_dict = {
     "NHS England (Region)": {"AgeAtBookingMotherGroup": {
         "numerator": ["35 to 39", "40 to 44", "45 or Over"],
         "denominator": ["Under 20", "20 to 24", "25 to 29", "30 to 34", "35 to 39", "40 to 44", "45 or Over"],
@@ -243,17 +245,19 @@ measure_dict = { #add an extra level to it for region/provider then add extra sq
     }
 }
 
+# Dictionary of the order of regions, to avoid alphabetical sorting
 region_order = {"London": 0, 
                 "South East": 1,
                 "South West": 2,
                 "Midlands": 3,
                 "North East and Yorkshire":4,
                 "East of England": 5,
-                "North West":6}
+                "North West": 6}
 
+# Dictionary of data file locations, with the year associated with them
 data_source = {"2022-23": "data/hosp-epis-stat-mat-msdscsv-2022-23.csv",
                 "2021-22": "data/hosp-epis-stat-mat-msdscsv-2021-22.csv",
                 "2020-21": "data/hosp-epis-stat-mat-msdscsv-2020-21.csv"}
-                #"2019-20": "data/hosp-epis-stat-mat-msdscsv-2019-20.csv"}
 
+# These are the dimensions that need extra considerations, due to them only havign a single measure
 special_dimensions = ["TotalBabies", "TotalDeliveries"]
