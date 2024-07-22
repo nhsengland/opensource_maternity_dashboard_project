@@ -11,7 +11,8 @@ import defaults
 import style
 import map_utils
 
-
+debug = False
+visibility = "hidden" if not(debug) else "visible"
 
 sidebar = html.Div(
     [
@@ -97,12 +98,12 @@ content = html.Div(
                 ),
             ]
         ),
-        #         html.Div([
-        #         html.Pre(id='selectedDataDisplay')
-        #     ]),
-        # html.Div([
-        #         html.Pre(id='selectedpointsdisplay')
-        #     ]),
+                 html.Div([
+                 html.Pre(id='selectedDataDisplay')
+             ], style={"visibility": visibility}),
+         html.Div([
+                 html.Pre(id='selectedpointsdisplay')
+             ], style={"visibility": visibility}),
     ],
     style=style.CONTENT_STYLE,
 )

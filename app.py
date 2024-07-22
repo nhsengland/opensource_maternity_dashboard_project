@@ -98,8 +98,8 @@ def display_chart(dimension, selectedData, org_level, year, chart_type):
     Output("map", "figure"),
     Output("map_title", "children"),
     Output("map_description", "children"),
-    # Output('selectedDataDisplay', 'children'),
-    # Output('selectedpointsdisplay', 'children'),
+    Output('selectedDataDisplay', 'children'),
+    Output('selectedpointsdisplay', 'children'),
     Input("dimension-dropdown", "value"),
     Input("map", "selectedData"),
     Input("org_level_button", "value"),
@@ -119,7 +119,7 @@ def display_map(dimension, selectedData, org_level, year):
         fig,
         map_title,
         map_description,
-    )  # , json.dumps(selectedData), json.dumps(selectedpoints)
+        json.dumps(selectedData), json.dumps(selectedpoints))
 
 
 
