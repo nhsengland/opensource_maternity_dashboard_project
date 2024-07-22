@@ -1,4 +1,3 @@
-from create_maps import process_data
 import plotly.express as px
 import sys
 import geopandas as gpd
@@ -6,6 +5,7 @@ import plotly.graph_objects as go
 
 sys.path.append("./")
 import config
+import process_data
 
 
 def get_geo_data():

@@ -12,32 +12,6 @@ import style
 import map_utils
 
 
-# if debug is true display all the debug info
-
-
-app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-server = app.server
-
-# Set defaults
-org_level = "NHS England (Region)"
-dimension = "AgeAtBookingMotherGroup"
-year = "2022-23"
-chart_type = "Bar Chart"
-
-
-
-
-app.layout = html.Div(
-    [
-        dcc.Location(id="url"),
-        dbc.Row(
-            [
-                dbc.Col(sidebar, width=1),
-                dbc.Col(content, width=11, style={"padding": "0"}),
-            ]
-        ),
-    ]
-)
 
 @callback(
     Output("bar-chart", "figure"),
@@ -50,6 +24,7 @@ app.layout = html.Div(
     Input("chart_button", "value"),
 )
 def display_chart(dimension, selectedData, org_level, year, chart_type):
+    print("Hello")
     location = "All Submitters"
     if selectedData is None and not (
         org_level == "Provider"
@@ -120,8 +95,3 @@ def display_map(dimension, selectedData, org_level, year):
         map_title,
         map_description,
     )  # , json.dumps(selectedData), json.dumps(selectedpoints)
-
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
