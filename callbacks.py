@@ -12,7 +12,6 @@ import style
 import map_utils
 
 
-
 @callback(
     Output("bar-chart", "figure"),
     Output("chart_title", "children"),
@@ -65,7 +64,9 @@ def display_chart(dimension, selectedData, org_level, year, chart_type):
         org_level = "National"
 
     fig = map_utils.get_chart(org_level, dimension, year, chart_type, location)
-    title, description = map_utils.get_chart_title(dimension, year, location, chart_type)
+    title, description = map_utils.get_chart_title(
+        dimension, year, location, chart_type
+    )
     return fig, title, description
 
 

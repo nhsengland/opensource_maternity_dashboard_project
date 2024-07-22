@@ -12,7 +12,7 @@ import style
 import map_utils
 
 debug = False
-visibility = "hidden" if not(debug) else "visible"
+visibility = "hidden" if not (debug) else "visible"
 
 sidebar = html.Div(
     [
@@ -66,7 +66,9 @@ content = html.Div(
                         ),  # move these to have different rowsand cols
                         dcc.Graph(
                             id="map",
-                            figure=map_utils.get_map(defaults.org_level, defaults.dimension, defaults.year),
+                            figure=map_utils.get_map(
+                                defaults.org_level, defaults.dimension, defaults.year
+                            ),
                             style={"height": "800px"},
                         ),
                     ],
@@ -98,12 +100,12 @@ content = html.Div(
                 ),
             ]
         ),
-                 html.Div([
-                 html.Pre(id='selectedDataDisplay')
-             ], style={"visibility": visibility}),
-         html.Div([
-                 html.Pre(id='selectedpointsdisplay')
-             ], style={"visibility": visibility}),
+        html.Div(
+            [html.Pre(id="selectedDataDisplay")], style={"visibility": visibility}
+        ),
+        html.Div(
+            [html.Pre(id="selectedpointsdisplay")], style={"visibility": visibility}
+        ),
     ],
     style=style.CONTENT_STYLE,
 )

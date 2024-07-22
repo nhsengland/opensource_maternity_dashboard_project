@@ -11,7 +11,6 @@ import style
 import draw_graphs
 
 
-
 def get_map(org_level, dimension, year, selectedpoints=None):
     fig = draw_graphs.draw_map(org_level, dimension, year, selectedpoints)
     return fig
@@ -54,5 +53,3 @@ def get_map_title(dimension, year, org_level):
         description = "Scatter plot map of England, with each point representing a maternity care provider"
 
     return title, description
-
-

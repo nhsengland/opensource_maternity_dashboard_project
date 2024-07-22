@@ -25,8 +25,6 @@ year = "2022-23"
 chart_type = "Bar Chart"
 
 
-
-
 app.layout = html.Div(
     [
         dcc.Location(id="url"),
@@ -38,6 +36,7 @@ app.layout = html.Div(
         ),
     ]
 )
+
 
 @callback(
     Output("bar-chart", "figure"),
@@ -90,7 +89,9 @@ def display_chart(dimension, selectedData, org_level, year, chart_type):
         org_level = "National"
 
     fig = map_utils.get_chart(org_level, dimension, year, chart_type, location)
-    title, description = map_utils.get_chart_title(dimension, year, location, chart_type)
+    title, description = map_utils.get_chart_title(
+        dimension, year, location, chart_type
+    )
     return fig, title, description
 
 
@@ -98,8 +99,8 @@ def display_chart(dimension, selectedData, org_level, year, chart_type):
     Output("map", "figure"),
     Output("map_title", "children"),
     Output("map_description", "children"),
-    Output('selectedDataDisplay', 'children'),
-    Output('selectedpointsdisplay', 'children'),
+    Output("selectedDataDisplay", "children"),
+    Output("selectedpointsdisplay", "children"),
     Input("dimension-dropdown", "value"),
     Input("map", "selectedData"),
     Input("org_level_button", "value"),
@@ -119,8 +120,9 @@ def display_map(dimension, selectedData, org_level, year):
         fig,
         map_title,
         map_description,
-        json.dumps(selectedData), json.dumps(selectedpoints))
-
+        json.dumps(selectedData),
+        json.dumps(selectedpoints),
+    )
 
 
 if __name__ == "__main__":
