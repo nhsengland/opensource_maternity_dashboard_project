@@ -43,7 +43,7 @@ def make_values_consistant(df):
     Returns:
     pandas.DataFrame: DataFrame with changes made (if any)
     """
-    
+    # Update the values in the Dimension column
     dimension_replace_dict = {
         "SmokingAtBooking": "SmokingStatusGroupBooking",
         "MethodOfDelivery": "DeliveryMethodBabyGroup",
@@ -51,6 +51,7 @@ def make_values_consistant(df):
     }
     df["Dimension"] = df["Dimension"].replace(dimension_replace_dict)
 
+    # Update the values in the Measure column
     measure_replace_dict = {
         "Missing Value / Value outside reporting parameters": "Missing value",
         "Missing Value/Value outside reporting parameters": "Missing value",
@@ -58,9 +59,8 @@ def make_values_consistant(df):
     }
     df["Measure"] = df["Measure"].replace(measure_replace_dict)
 
-
-    # Dictionary for replacements
-    measure_replace_dict = {
+    # Only replace these numbers for the Deprivation measure
+    deprivation_replace_dict = {
         "2": "02",
         "3": "03",
         "4": "04",
@@ -70,14 +70,11 @@ def make_values_consistant(df):
         "8": "08",
         "9": "09",
     }
-    # Filter DataFrame where 'Category' is 'Deprivation'
     condition = df['Dimension'] == 'DeprivationDecileAtBooking'
-    # Apply replacements only to the filtered rows
-    df.loc[condition, 'Measure'] = df.loc[condition, 'Measure'].replace(measure_replace_dict)
+    df.loc[condition, 'Measure'] = df.loc[condition, 'Measure'].replace(deprivation_replace_dict)
 
     return df
     
-
 
 def filter_for_measure_and_level(df, dimension, org_level):
     """
@@ -93,9 +90,10 @@ def filter_for_measure_and_level(df, dimension, org_level):
     pandas.DataFrame: Filtered DataFrame containing only rows that match the specified dimension and organisation level.
 
     """
-    # Filter the DataFrame to only include rows with the specified organisation level and dimension
+    # Filter for the Org_Level
     df_filtered = df[df["Org_Level"] == org_level]
 
+    # Filter for the Dimension
     df_filtered = df_filtered[df_filtered["Dimension"] == dimension]
 
     return df_filtered
@@ -116,25 +114,18 @@ def get_rates(df, dimension, measure_dict, org_level):
     pandas.DataFrame: DataFrame with the calculated rates for the specified dimension.
     """
 
-
     # Pivot the DataFrame to have 'Measure' values as columns and 'Org_Name' as the index
-    df_pivoted = df.pivot(columns="Measure", values="Value", index="Org_Name")
-    
-    # Reset the index to convert 'Org_Name' from index to a column
-    df_pivoted = df_pivoted.reset_index()
-
-    
+    df_pivoted = df.pivot(columns="Measure", values="Value", index="Org_Name").reset_index()
+     
     # Calculate the rate by dividing the sum of the numerator by the sum of the denominator
     numerator_sum = df_pivoted[measure_dict[org_level][dimension]["numerator"]].sum(axis=1)
-
     denominator_sum = df_pivoted[measure_dict[org_level][dimension]["denominator"]].sum(axis=1)
-
     df_pivoted["Rate"] = numerator_sum / denominator_sum
     
     return df_pivoted
 
 
-def join_pop_data(df):
+def join_pop_data(df, year):
     """
     Imports population data, aggregates it by region, and joins it onto the given DataFrame.
     This function is currently designed for calculating rates for total babies/deliveries.
@@ -148,13 +139,11 @@ def join_pop_data(df):
                       with an additional 'Rate' column calculated using ONS population estimates as the denominator.
     """
     # Read the population data from the specified Excel file and sheet
-    #This will need updated based on year!!!!!!!
-    df_pop = pd.read_excel("data/ons_2022-23_pop_health_geos.xlsx", sheet_name="Mid-2022 ICB 2023", header=3)
-    df_pop = df_pop[['NSHER 2023 Name', 'NHSER 2023 Code', 'Total']]
+    df_pop = pd.read_excel(config.pop_source[year][0], sheet_name=config.pop_source[year][1], header=3)
 
     # Aggregate the population data by region name and code, summing the total population and merge together
-    df_pop_agg = df_pop.groupby(['NSHER 2023 Name', 'NHSER 2023 Code'])['Total'].sum().reset_index()
-    joined_df = df.merge(df_pop_agg, left_on="Org_Name", right_on="NSHER 2023 Name", how="left")
+    df_pop_agg = df_pop.groupby(config.pop_source[year][2])['Total'].sum().reset_index()
+    joined_df = df.merge(df_pop_agg, left_on="Org_Name", right_on=config.pop_source[year][2][0], how="left")
 
     # Calculate the rate using the ONS population estimates as the denominator
     joined_df["Rate"] = joined_df['Value'] / joined_df['Total']
@@ -190,27 +179,23 @@ def return_data_for_map(dimension, org_level, measure_dict, year):
     df = map_org_name(df)
     df = make_values_consistant(df)
     df = join_lat_lon_data(df)
-
     df = filter_for_measure_and_level(df, dimension, org_level)
     
     # If the dimension is 'TotalBabies' or 'TotalDeliveries', join population data and calculate rates
     if dimension in config.special_dimensions:
-        df_rates = join_pop_data(df)
+        df_rates = join_pop_data(df, year)
         df_rates["Rate"] = df_rates["Rate"] * 1000
     else:
         # For other dimensions, calculate rates using the provided measure dictionary
         df_rates = get_rates(df, dimension, measure_dict, org_level)
         df_rates["Percent"] = df_rates["Rate"] * 100
-        #merge the lat and lon back in
-    
-    
+
+    # Merge lat and lon back in
     df = df_rates.merge(df[['Org_Name', 'latitude', 'longitude']].drop_duplicates(), on='Org_Name', how='left', suffixes=('', '_'))
+
     #Enforce region order
     df = df.sort_values("Org_Name", key=lambda col:col.map(config.region_order), ignore_index=True)
-    if org_level == "Provider":
-        # I think the providers have changed so sorting doesn't make the numbers consistant
-        # How could I do it without having a 200 line dictionary assigning values...
-        df = df.sort_values("Org_Name")
+
     return df
 
 def return_data_for_bar_chart(dimension, org_level, location, year):
@@ -230,34 +215,22 @@ def return_data_for_special_bar_chart(dimension, year):
     df = map_org_name(df)
     df = make_values_consistant(df)
     df = filter_for_measure_and_level(df, dimension, "NHS England (Region)")
-    df = join_pop_data(df)
+    df = join_pop_data(df, year)
     df["Rate"] = df["Rate"] * 1000
 
     return df
 
 
-def merge_total_submitters(df_location, df_all_submitters, by_year=False):
+def merge_total_submitters(df_location, df_all_submitters):
     #Merges the two dataframes together and creates the percentage for the comparison marker to All Submitters
-    if by_year:
-        total_all_submitters = df_all_submitters['Value'].sum()
-        df_all_submitters['Percentage'] = df_all_submitters['Value'] / total_all_submitters
-        
-        # Merge the percentage data with the location-specific data
-        df_merged = pd.merge(df_location, df_all_submitters[['Measure', 'Percentage']], on='Measure', suffixes=('', '_all_submitters'))
-        
-        # Calculate the marker values
-        df_merged['All Submitters Value'] = df_merged['Percentage'] * df_location['Value'].sum()
-
-    else:
-    # Calculate the total value for each measure in all submitters
-        total_all_submitters = df_all_submitters['Value'].sum()
-        df_all_submitters['Percentage'] = df_all_submitters['Value'] / total_all_submitters
-        
-        # Merge the percentage data with the location-specific data
-        df_merged = pd.merge(df_location, df_all_submitters[['Measure', 'Percentage']], on='Measure', suffixes=('', '_all_submitters'))
-        
-        # Calculate the marker values
-        df_merged['All Submitters Value'] = df_merged['Percentage'] * df_location['Value'].sum()
+    total_all_submitters = df_all_submitters['Value'].sum()
+    df_all_submitters['Percentage'] = df_all_submitters['Value'] / total_all_submitters
+    
+    # Merge the percentage data with the location-specific data
+    df_merged = pd.merge(df_location, df_all_submitters[['Measure', 'Percentage']], on='Measure', suffixes=('', '_all_submitters'))
+    
+    # Calculate the marker values
+    df_merged['All Submitters Value'] = df_merged['Percentage'] * df_location['Value'].sum()
 
     return df_merged
     
@@ -277,22 +250,22 @@ def return_data_for_time_series(dimension, org_level, location):
     
     # Concatenate all DataFrames into a single DataFrame
     combined_df = pd.concat(all_data, ignore_index=True)
-    
-    # Map organization names
-    combined_df = map_org_name(combined_df)
-    combined_df = make_values_consistant(combined_df)
 
-    if dimension in config.special_dimensions and org_level == "National":
-        #This means the time series will start off showing the regions for the special dims
+    # Force region breakdown to be shown, instead of All Submitters or All of the providers
+    if dimension in config.special_dimensions and (org_level == "National" or org_level == "Provider"):
         org_level = "NHS England (Region)"
     
     # Filter for the specified measure and organization level
     combined_df = filter_for_measure_and_level(combined_df, dimension, org_level)
-    
-    # Filter for the specified location
+    combined_df = map_org_name(combined_df)
+    combined_df = make_values_consistant(combined_df)
+    print(df[df["Dimension"]=="SmokingStatusGroupBooking"])
+
+    # Filter for the specified location, otherwise make rate data
     if dimension not in config.special_dimensions:
         combined_df = combined_df[combined_df["Org_Name"] == location]
+    else:
+        combined_df = join_pop_data(combined_df, year)
+        combined_df["Rate"] = combined_df["Rate"] * 1000
 
-    
     return combined_df
-    

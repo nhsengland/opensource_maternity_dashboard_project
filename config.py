@@ -259,6 +259,10 @@ data_source = {"2022-23": "data/hosp-epis-stat-mat-msdscsv-2022-23.csv",
                 "2021-22": "data/hosp-epis-stat-mat-msdscsv-2021-22.csv",
                 "2020-21": "data/hosp-epis-stat-mat-msdscsv-2020-21.csv"}
 
+pop_source = {"2022-23": ["data/ons_2022-23_pop_health_geos.xlsx", "Mid-2022 ICB 2023", ['NSHER 2023 Name', 'NHSER 2023 Code']],
+                "2021-22": ["data/ons_2022-23_pop_health_geos.xlsx", "Mid-2021 ICB 2023", ['NHSER 2023 Name', 'NHSER 2023 Code']],
+                "2020-21": ["data/ons_2022-23_pop_health_geos.xlsx", "Mid-2021 ICB 2023", ['NHSER 2023 Name', 'NHSER 2023 Code']]} #need to find population estimate for mid 2020.....
+
 # These are the dimensions that need extra considerations, due to them only havign a single measure
 special_dimensions = ["TotalBabies", "TotalDeliveries"]
 

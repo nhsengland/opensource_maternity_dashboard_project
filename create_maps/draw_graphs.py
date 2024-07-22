@@ -16,7 +16,6 @@ def get_geo_data():
     return geo_df
 
 def set_up_map(df, geo_df, org_level, dimension, selectedpoints):
-
     fig = px.choropleth_mapbox(
         df, 
         geojson=geo_df, 
@@ -68,8 +67,8 @@ def add_scatter_points(fig, df, org_level, dimension):
     return fig
 
 
-
 def draw_map(org_level, dimension, year, selectedpoints=None):
+    # pulls together necessary functions to draw either region or provider map
     df = process_data.return_data_for_map(dimension, org_level, config.measure_dict, year)
     geo_df = get_geo_data() 
     fig = set_up_map(df, geo_df, org_level, dimension, selectedpoints)
@@ -121,26 +120,28 @@ def draw_bar_chart(org_level, dimension, year, location):
 
 
 def draw_time_series(org_level, dimension, location):
-    df_location = process_data.return_data_for_time_series(dimension, org_level, location)
+    if dimension in config.special_dimensions:
+        split_on = "Org_Name"
+        value = "Rate"
+    else:
+        split_on = "Measure"
+        value = "Value"
 
+    df_location = process_data.return_data_for_time_series(dimension, org_level, location)
     # Strip the first characters to get numeric year for sorting
     df_location['numeric_year'] = df_location['year'].str.split('-').str[0].astype(int)
 
     # Sort by numeric year
     df_location = df_location.sort_values(by='numeric_year')
 
-    if dimension in config.special_dimensions:
-        split_on = "Org_Name"
-    else:
-        split_on = "Measure"
 
     # Create custom hover text
     df_location['hover_text'] = df_location.apply(
-        lambda row: f"Year: {row['year']}<br>{split_on}: {row[split_on]}<br>Value: {row['Value']}", axis=1)
+        lambda row: f"Year: {row['year']}<br>{split_on}: {row[split_on]}<br>Value: {row[value]}", axis=1)
     
     # Create the time series line graph with custom hover text
-    fig = px.line(df_location, x="year", y="Value", color=split_on,
-                  hover_data={'hover_text': True})
+    fig = px.line(df_location, x="year", y=value, color=split_on,
+                hover_data={'hover_text': True})
     
     # Update hover data to use custom text
     fig.update_traces(hovertemplate='%{customdata}')
@@ -152,7 +153,7 @@ def draw_time_series(org_level, dimension, location):
         fig.add_trace(
             go.Scatter(
                 x=df_measure['year'], 
-                y=df_measure['Value'], 
+                y=df_measure[value], 
                 mode='markers',
                 name=f'{measure} Dots',
                 marker=dict(
@@ -166,5 +167,5 @@ def draw_time_series(org_level, dimension, location):
         )
 
     fig.update_layout(xaxis_title='', yaxis_title='')
-
+    
     return fig
