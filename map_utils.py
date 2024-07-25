@@ -1,15 +1,10 @@
-from dash import Dash, dcc, html, Input, Output, callback, ctx
 import draw_graphs
 import sys
-import dash_bootstrap_components as dbc
-import json
 
 sys.path.append("./")
 import config
 import textwrap
-import style
 import draw_graphs
-
 
 def get_map(org_level, dimension, year, selectedpoints=None):
     fig = draw_graphs.draw_map(org_level, dimension, year, selectedpoints)

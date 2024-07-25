@@ -1,12 +1,9 @@
-from dash import Dash, dcc, html, Input, Output, callback, ctx
-import draw_graphs
+from dash import  dcc, html
 import sys
 import dash_bootstrap_components as dbc
-import json
 
 sys.path.append("./")
 import config
-import textwrap
 import defaults
 import style
 import map_utils

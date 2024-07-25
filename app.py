@@ -1,18 +1,13 @@
 from dash import Dash, dcc, html, Input, Output, callback, ctx
-import draw_graphs
 import sys
 import dash_bootstrap_components as dbc
 import json
 
 sys.path.append("./")
 import config
-import textwrap
 from layout import sidebar, content
-import style
 import map_utils
 
-
-# if debug is true display all the debug info
 
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -36,7 +31,6 @@ app.layout = html.Div(
         ),
     ]
 )
-
 
 @callback(
     Output("bar-chart", "figure"),
