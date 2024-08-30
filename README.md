@@ -19,3 +19,11 @@ To deploy locally:
 
 This repository is maintained by the NHS England Data Science team.
 To contact us raise an issue on Github or via our email (england.datascience@nhs.net) and we will respond promptly.
+
+# Licence
+
+This codebase is released under the MIT License.
+
+The documentation is © Crown copyright and available under the terms of the Open Government 3.0 licence.
+
+https://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/uk-government-licensing-framework/crown-copyright/
